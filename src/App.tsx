@@ -37,8 +37,10 @@ export default function App() {
       if (currentSurah !== newSurah) {
         if (selectedSurah) {
           url.searchParams.set("surah", selectedSurah.toString());
+          url.searchParams.delete("ayah");
         } else {
           url.searchParams.delete("surah");
+          url.searchParams.delete("ayah");
         }
         window.history.pushState({}, "", url.toString());
       }
