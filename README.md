@@ -36,7 +36,7 @@ Make sure you have [Node.js](https://nodejs.org/) installed on your machine.
 
 1. Clone the repository:
    ```bash
-   git clone <repository-url>
+   git clone https://github.com/iammuttaqi/al-quran.git
    ```
 2. Navigate into the project directory:
    ```bash
