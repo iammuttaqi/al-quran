@@ -20,6 +20,7 @@ interface SurahViewProps {
 type TranslationLanguage = "en.sahih" | "pt.elhayek" | "bn.bengali";
 
 const TRANSLATION_OPTIONS = [
+  { id: "arabic_original", name: "Arabic (Original)" },
   { id: "en.sahih", name: "English (Saheeh)" },
   { id: "pt.elhayek", name: "Portuguese (El-Hayek)" },
   { id: "bn.bengali", name: "Bangla (Muhiuddin Khan)" },
@@ -30,7 +31,7 @@ export function SurahView({ surahId, onBack, onNavigate }: SurahViewProps) {
   const [translationsData, setTranslationsData] = useState<SurahDetail[]>([]);
   const [audioData, setAudioData] = useState<SurahDetail | null>(null);
   const [loading, setLoading] = useState(true);
-  const [translationLangs, setTranslationLangs] = useState<string[]>(['en.sahih']);
+  const [translationLangs, setTranslationLangs] = useState<string[]>(['arabic_original', 'en.sahih']);
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
 
   const [playingAyah, setPlayingAyah] = useState<number | null>(null);
@@ -44,7 +45,8 @@ export function SurahView({ surahId, onBack, onNavigate }: SurahViewProps) {
   useEffect(() => {
     setLoading(true);
     // Fetch Arabic, Translations, and Audio
-    const langsQuery = translationLangs.length > 0 ? `,${translationLangs.join(',')}` : '';
+    const apiLangs = translationLangs.filter(id => id !== 'arabic_original');
+    const langsQuery = apiLangs.length > 0 ? `,${apiLangs.join(',')}` : '';
     fetch(
       `https://api.alquran.cloud/v1/surah/${surahId}/editions/quran-uthmani${langsQuery},ar.alafasy`,
     )
@@ -215,7 +217,7 @@ export function SurahView({ surahId, onBack, onNavigate }: SurahViewProps) {
       </div>
 
       {/* Bismillah (except for Surah 9) */}
-      {surahId !== 9 && surahId !== 1 && (
+      {surahId !== 9 && surahId !== 1 && translationLangs.includes('arabic_original') && (
         <div className="text-center font-arabic text-3xl md:text-4xl text-foreground mb-12 leading-loose">
           بِسْمِ ٱللَّهِ ٱلرَّحْمَٰنِ ٱلرَّحِيمِ
         </div>
@@ -295,24 +297,29 @@ export function SurahView({ surahId, onBack, onNavigate }: SurahViewProps) {
               </div>
 
               <div className="flex flex-col">
-                <div
-                  className="text-right font-arabic text-3xl md:text-4xl leading-[2.5] text-foreground"
-                  dir="rtl"
-                >
-                  {arabicText}{" "}
-                  <span className="inline-flex items-center justify-center w-10 h-10 rounded-full border-2 border-primary/30 text-primary text-lg ml-2">
-                    {ayah.numberInSurah}
-                  </span>
-                </div>
+                {translationLangs.includes('arabic_original') && (
+                  <div
+                    className="text-right font-arabic text-2xl md:text-3xl leading-[2.5] text-foreground"
+                    dir="rtl"
+                  >
+                    {arabicText}{" "}
+                    <span className="inline-flex items-center justify-center w-10 h-10 rounded-full border-2 border-primary/30 text-primary text-lg ml-2">
+                      {ayah.numberInSurah}
+                    </span>
+                  </div>
+                )}
 
                 {translationsData.length > 0 && (
-                  <div className="flex flex-col space-y-4 mt-4 pt-4 border-t border-border/50">
+                  <div className={cn("flex flex-col space-y-4 border-border/50", translationLangs.includes('arabic_original') && "mt-4 pt-4 border-t")}>
                     {translationsData.map((transData) => (
                       <div
                         key={transData.edition.identifier}
-                        className="text-lg text-muted-foreground leading-relaxed"
+                        className={cn(
+                          "text-lg text-muted-foreground leading-relaxed",
+                          transData.edition.language === "bn" && "font-bengali"
+                        )}
                       >
-                        <span className="text-[10px] font-bold uppercase tracking-wider text-primary/70 block mb-1">
+                        <span className="text-[10px] font-bold uppercase tracking-wider text-primary/70 block mb-1 font-sans">
                           {transData.edition.englishName}
                         </span>
                         {transData.ayahs[index].text}
