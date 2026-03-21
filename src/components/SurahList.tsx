@@ -69,27 +69,23 @@ export function SurahList({ onSelectSurah }: SurahListProps) {
           <button
             key={surah.number}
             onClick={() => onSelectSurah(surah.number)}
-            className="flex items-center p-4 bg-card border border-border rounded-xl hover:border-primary hover:shadow-md transition-all text-left group"
+            className="flex items-center justify-between p-5 bg-card border border-border/60 rounded-2xl hover:border-primary/50 hover:shadow-sm transition-all text-left group"
           >
-            <div className="flex-shrink-0 w-12 h-12 flex items-center justify-center bg-secondary rounded-full text-secondary-foreground font-semibold group-hover:bg-primary group-hover:text-primary-foreground transition-colors relative">
-              <span className="absolute inset-0 flex items-center justify-center opacity-10 text-4xl">
-                <BookOpen className="w-8 h-8" />
-              </span>
-              {surah.number}
-            </div>
-            <div className="ml-4 flex-1">
-              <h3 className="text-lg font-semibold text-foreground group-hover:text-primary transition-colors">
-                {surah.englishName}
-              </h3>
-              <p className="text-sm text-muted-foreground">
-                {surah.englishNameTranslation}
-              </p>
-            </div>
-            <div className="text-right">
-              <div className="font-arabic text-xl text-foreground">
-                {surah.name}
+            <div className="flex items-center gap-4">
+              <div className="relative flex items-center justify-center w-10 h-10 rounded-lg bg-secondary/50 text-secondary-foreground font-medium text-sm group-hover:bg-primary/10 group-hover:text-primary transition-colors">
+                {surah.number}
               </div>
-              <p className="text-xs text-muted-foreground mt-1">
+              <div>
+                <h3 className="text-base font-semibold text-foreground group-hover:text-primary transition-colors">
+                  {surah.englishName}
+                </h3>
+                <p className="text-[11px] text-muted-foreground mt-0.5 uppercase tracking-wider font-medium">
+                  {surah.englishNameTranslation}
+                </p>
+              </div>
+            </div>
+            <div className="text-right flex items-center">
+              <p className="text-[11px] text-muted-foreground font-medium bg-secondary/50 px-2.5 py-1 rounded-md">
                 {surah.numberOfAyahs} Ayahs
               </p>
             </div>
