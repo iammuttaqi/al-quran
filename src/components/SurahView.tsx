@@ -27,12 +27,23 @@ const TRANSLATION_OPTIONS = [
   { id: "bn.bengali", name: "Bangla (Muhiuddin Khan)" },
 ];
 
+const ALL_LANGS = TRANSLATION_OPTIONS.map(opt => opt.id);
+
 export function SurahView({ surahId, onBack, onNavigate }: SurahViewProps) {
   const [arabicData, setArabicData] = useState<SurahDetail | null>(null);
   const [translationsData, setTranslationsData] = useState<SurahDetail[]>([]);
   const [audioData, setAudioData] = useState<SurahDetail | null>(null);
   const [loading, setLoading] = useState(true);
-  const [translationLangs, setTranslationLangs] = useState<string[]>(['arabic_original', 'en.sahih']);
+  const [translationLangs, setTranslationLangs] = useState<string[]>(() => {
+    if (typeof window !== "undefined") {
+      const params = new URLSearchParams(window.location.search);
+      const langsParam = params.get("langs");
+      if (langsParam !== null) {
+        return langsParam.split(",").filter(lang => ALL_LANGS.includes(lang));
+      }
+    }
+    return ALL_LANGS;
+  });
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
   const [showShareToast, setShowShareToast] = useState(false);
 
@@ -69,6 +80,37 @@ export function SurahView({ surahId, onBack, onNavigate }: SurahViewProps) {
         setLoading(false);
       });
   }, [surahId, translationLangs]);
+
+  useEffect(() => {
+    if (typeof window !== "undefined") {
+      const url = new URL(window.location.href);
+      const currentLangsParam = url.searchParams.get("langs");
+      const newLangsParam = translationLangs.join(",");
+      
+      if (currentLangsParam !== newLangsParam) {
+        if (translationLangs.length > 0) {
+          url.searchParams.set("langs", newLangsParam);
+        } else {
+          url.searchParams.set("langs", "");
+        }
+        window.history.replaceState({}, "", url.toString());
+      }
+    }
+  }, [translationLangs]);
+
+  useEffect(() => {
+    const handlePopState = () => {
+      const params = new URLSearchParams(window.location.search);
+      const langsParam = params.get("langs");
+      if (langsParam !== null) {
+        setTranslationLangs(langsParam.split(",").filter(lang => ALL_LANGS.includes(lang)));
+      } else {
+        setTranslationLangs(ALL_LANGS);
+      }
+    };
+    window.addEventListener("popstate", handlePopState);
+    return () => window.removeEventListener("popstate", handlePopState);
+  }, []);
 
   const toggleLanguage = (langId: string) => {
     setTranslationLangs((prev) => {

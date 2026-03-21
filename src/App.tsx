@@ -31,12 +31,17 @@ export default function App() {
   useEffect(() => {
     if (typeof window !== "undefined") {
       const url = new URL(window.location.href);
-      if (selectedSurah) {
-        url.searchParams.set("surah", selectedSurah.toString());
-      } else {
-        url.searchParams.delete("surah");
+      const currentSurah = url.searchParams.get("surah");
+      const newSurah = selectedSurah ? selectedSurah.toString() : null;
+      
+      if (currentSurah !== newSurah) {
+        if (selectedSurah) {
+          url.searchParams.set("surah", selectedSurah.toString());
+        } else {
+          url.searchParams.delete("surah");
+        }
+        window.history.pushState({}, "", url.toString());
       }
-      window.history.pushState({}, "", url.toString());
     }
   }, [selectedSurah]);
 
