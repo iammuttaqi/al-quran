@@ -12,6 +12,7 @@ A beautifully crafted, modern, and responsive web application for reading and li
 - **🎧 Audio Playback:** Listen to high-quality audio recitations (Mishary Rashid Alafasy) for each Ayah.
 - **🔗 Smart URL Sharing:** Share specific Surahs and Ayahs easily via clean URLs (e.g., `?surah=2&ayah=4`).
 - **🔖 Bookmarking:** Save your progress by bookmarking specific Ayahs. Your bookmarks are saved locally on your device.
+- **📲 Progressive Web App (PWA):** Install the app on your home screen for an app-like experience, including offline support for cached assets.
 - **📱 Responsive Design:** A mobile-first, highly responsive UI that looks beautiful on phones, tablets, and desktop computers.
 - **🎨 Modern UI/UX:** Clean typography, smooth transitions, and an intuitive interface designed for readability.
 
