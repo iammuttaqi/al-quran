@@ -1,0 +1,5 @@
+{
+  "name": "Al Quran",
+  "description": "A responsive web application for reading the Quran with translations and audio.",
+  "requestFramePermissions": []
+}
