@@ -94,6 +94,7 @@ export function SurahView({ surahId, onBack, onNavigate }: SurahViewProps) {
       if (audioRef.current) {
         audioRef.current.pause();
       }
+
       const audio = new Audio(audioUrl);
       audioRef.current = audio;
       audio.play();
@@ -120,6 +121,16 @@ export function SurahView({ surahId, onBack, onNavigate }: SurahViewProps) {
       }
     };
   }, []);
+
+  // Scroll to playing ayah
+  useEffect(() => {
+    if (playingAyah !== null) {
+      const element = document.getElementById(`ayah-${playingAyah}`);
+      if (element) {
+        element.scrollIntoView({ behavior: "smooth", block: "center" });
+      }
+    }
+  }, [playingAyah]);
 
   if (loading || !arabicData) {
     return (
@@ -283,7 +294,7 @@ export function SurahView({ surahId, onBack, onNavigate }: SurahViewProps) {
                 </div>
               </div>
 
-              <div className="flex flex-col space-y-6">
+              <div className="flex flex-col">
                 <div
                   className="text-right font-arabic text-3xl md:text-4xl leading-[2.5] text-foreground"
                   dir="rtl"
@@ -295,7 +306,7 @@ export function SurahView({ surahId, onBack, onNavigate }: SurahViewProps) {
                 </div>
 
                 {translationsData.length > 0 && (
-                  <div className="flex flex-col space-y-4 mt-6 pt-6 border-t border-border/50">
+                  <div className="flex flex-col space-y-4 mt-4 pt-4 border-t border-border/50">
                     {translationsData.map((transData) => (
                       <div
                         key={transData.edition.identifier}
