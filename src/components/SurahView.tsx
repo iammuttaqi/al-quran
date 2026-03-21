@@ -45,6 +45,7 @@ export function SurahView({ surahId, onBack, onNavigate }: SurahViewProps) {
     return ALL_LANGS;
   });
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
+  const dropdownRef = useRef<HTMLDivElement>(null);
   const [showShareToast, setShowShareToast] = useState(false);
 
   const [playingAyah, setPlayingAyah] = useState<number | null>(null);
@@ -80,6 +81,12 @@ export function SurahView({ surahId, onBack, onNavigate }: SurahViewProps) {
         setLoading(false);
       });
   }, [surahId, translationLangs]);
+
+  useEffect(() => {
+    if (arabicData) {
+      document.title = `Surah ${arabicData.englishName} - Al Quran`;
+    }
+  }, [arabicData]);
 
   useEffect(() => {
     if (typeof window !== "undefined") {
@@ -178,6 +185,52 @@ export function SurahView({ surahId, onBack, onNavigate }: SurahViewProps) {
     }
   }, [playingAyah]);
 
+  // Handle click outside dropdown
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
+        setIsDropdownOpen(false);
+      }
+    };
+
+    if (isDropdownOpen) {
+      document.addEventListener("mousedown", handleClickOutside);
+    }
+    return () => {
+      document.removeEventListener("mousedown", handleClickOutside);
+    };
+  }, [isDropdownOpen]);
+
+  // Scroll to top or specific ayah on load
+  useEffect(() => {
+    if (!loading && arabicData) {
+      const params = new URLSearchParams(window.location.search);
+      const ayahParam = params.get("ayah");
+      
+      if (ayahParam) {
+        const parsedAyah = parseInt(ayahParam, 10);
+        if (!isNaN(parsedAyah)) {
+          // Small delay to ensure rendering is complete
+          setTimeout(() => {
+            const element = document.getElementById(`ayah-${parsedAyah}`);
+            if (element) {
+              element.scrollIntoView({ behavior: "smooth", block: "center" });
+              // Add a brief highlight effect
+              element.classList.add("ring-2", "ring-primary", "ring-offset-2", "ring-offset-background");
+              setTimeout(() => {
+                element.classList.remove("ring-2", "ring-primary", "ring-offset-2", "ring-offset-background");
+              }, 2000);
+            }
+          }, 100);
+          return;
+        }
+      }
+      
+      // Default: scroll to top
+      window.scrollTo(0, 0);
+    }
+  }, [loading, arabicData, surahId]);
+
   const handleShare = async () => {
     const url = window.location.href;
     if (navigator.share) {
@@ -192,6 +245,31 @@ export function SurahView({ surahId, onBack, onNavigate }: SurahViewProps) {
       }
     } else {
       navigator.clipboard.writeText(url);
+      setShowShareToast(true);
+      setTimeout(() => setShowShareToast(false), 2000);
+    }
+  };
+
+  const shareAyah = async (ayahNumber: number) => {
+    const url = new URL(window.location.href);
+    url.searchParams.set("ayah", ayahNumber.toString());
+    const shareUrl = url.toString();
+    
+    // Update URL without reloading
+    window.history.replaceState({}, "", shareUrl);
+
+    if (navigator.share) {
+      try {
+        await navigator.share({
+          title: `Surah ${arabicData?.englishName} - Ayah ${ayahNumber}`,
+          text: `Read Surah ${arabicData?.englishName}, Ayah ${ayahNumber} on Al Quran`,
+          url: shareUrl,
+        });
+      } catch (err) {
+        console.error("Error sharing:", err);
+      }
+    } else {
+      navigator.clipboard.writeText(shareUrl);
       setShowShareToast(true);
       setTimeout(() => setShowShareToast(false), 2000);
     }
@@ -227,7 +305,7 @@ export function SurahView({ surahId, onBack, onNavigate }: SurahViewProps) {
             <Share2 className="w-5 h-5" />
           </button>
 
-          <div className="relative w-full sm:w-auto">
+          <div className="relative w-full sm:w-auto" ref={dropdownRef}>
             <button
               onClick={() => setIsDropdownOpen(!isDropdownOpen)}
               className="flex items-center justify-between w-full sm:w-64 bg-secondary border border-border text-foreground py-2 pl-4 pr-3 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary text-sm transition-colors"
@@ -241,34 +319,28 @@ export function SurahView({ surahId, onBack, onNavigate }: SurahViewProps) {
           </button>
 
           {isDropdownOpen && (
-            <>
-              <div
-                className="fixed inset-0 z-10"
-                onClick={() => setIsDropdownOpen(false)}
-              ></div>
-              <div className="absolute right-0 mt-2 w-full sm:w-64 bg-card border border-border rounded-lg shadow-lg z-20 py-1 overflow-hidden">
-                {TRANSLATION_OPTIONS.map((opt) => {
-                  const isActive = translationLangs.includes(opt.id);
-                  return (
-                    <button
-                      key={opt.id}
-                      onClick={() => toggleLanguage(opt.id)}
-                      className="flex items-center w-full px-4 py-2.5 text-sm text-left hover:bg-secondary transition-colors"
-                    >
-                      <div className={cn(
-                        "flex items-center justify-center w-4 h-4 mr-3 rounded border",
-                        isActive ? "bg-primary border-primary text-primary-foreground" : "border-muted-foreground"
-                      )}>
-                        {isActive && <Check className="w-3 h-3" />}
-                      </div>
-                      <span className={isActive ? "text-foreground font-medium" : "text-muted-foreground"}>
-                        {opt.name}
-                      </span>
-                    </button>
-                  );
-                })}
-              </div>
-            </>
+            <div className="absolute right-0 mt-2 w-full sm:w-64 bg-card border border-border rounded-lg shadow-lg z-20 py-1 overflow-hidden">
+              {TRANSLATION_OPTIONS.map((opt) => {
+                const isActive = translationLangs.includes(opt.id);
+                return (
+                  <button
+                    key={opt.id}
+                    onClick={() => toggleLanguage(opt.id)}
+                    className="flex items-center w-full px-4 py-2.5 text-sm text-left hover:bg-secondary transition-colors"
+                  >
+                    <div className={cn(
+                      "flex items-center justify-center w-4 h-4 mr-3 rounded border",
+                      isActive ? "bg-primary border-primary text-primary-foreground" : "border-muted-foreground"
+                    )}>
+                      {isActive && <Check className="w-3 h-3" />}
+                    </div>
+                    <span className={isActive ? "text-foreground font-medium" : "text-muted-foreground"}>
+                      {opt.name}
+                    </span>
+                  </button>
+                );
+              })}
+            </div>
           )}
           </div>
         </div>
@@ -344,6 +416,14 @@ export function SurahView({ surahId, onBack, onNavigate }: SurahViewProps) {
                     <Bookmark
                       className={cn("w-4 h-4", isBookmarked && "fill-current")}
                     />
+                  </button>
+
+                  <button
+                    onClick={() => shareAyah(ayah.numberInSurah)}
+                    className="p-2 rounded-full text-muted-foreground hover:bg-secondary hover:text-foreground transition-colors"
+                    title="Share this ayah"
+                  >
+                    <Share2 className="w-4 h-4" />
                   </button>
 
                   {audio?.audio && (

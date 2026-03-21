@@ -73,6 +73,12 @@ export default function App() {
     }
   }, [isDarkMode]);
 
+  useEffect(() => {
+    if (!selectedSurah) {
+      document.title = "Al Quran";
+    }
+  }, [selectedSurah]);
+
   return (
     <div className="min-h-screen bg-background text-foreground transition-colors duration-300">
       <header className="w-full border-b border-border bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
