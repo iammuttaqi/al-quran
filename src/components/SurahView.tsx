@@ -442,7 +442,7 @@ export function SurahView({ surahId, onBack, onNavigate }: SurahViewProps) {
               <div className="flex flex-col">
                 {translationLangs.includes('arabic_original') && (
                   <div
-                    className="text-right font-arabic text-lg leading-[2.5] text-foreground"
+                    className="text-right font-arabic text-base leading-[2.5] text-foreground"
                     dir="rtl"
                   >
                     {arabicText}{" "}
@@ -458,7 +458,7 @@ export function SurahView({ surahId, onBack, onNavigate }: SurahViewProps) {
                       <div
                         key={transData.edition.identifier}
                         className={cn(
-                          "text-lg text-muted-foreground leading-relaxed",
+                          "text-base text-muted-foreground leading-relaxed",
                           transData.edition.language === "bn" && "font-bengali"
                         )}
                       >
