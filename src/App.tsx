@@ -4,7 +4,20 @@ import { SurahList } from "./components/SurahList";
 import { SurahView } from "./components/SurahView";
 
 export default function App() {
-  const [selectedSurah, setSelectedSurah] = useState<number | null>(null);
+  const [selectedSurah, setSelectedSurah] = useState<number | null>(() => {
+    if (typeof window !== "undefined") {
+      const params = new URLSearchParams(window.location.search);
+      const surahParam = params.get("surah");
+      if (surahParam) {
+        const parsed = parseInt(surahParam, 10);
+        if (!isNaN(parsed) && parsed >= 1 && parsed <= 114) {
+          return parsed;
+        }
+      }
+    }
+    return null;
+  });
+
   const [isDarkMode, setIsDarkMode] = useState(() => {
     if (typeof window !== "undefined") {
       return (
@@ -14,6 +27,38 @@ export default function App() {
     }
     return false;
   });
+
+  useEffect(() => {
+    if (typeof window !== "undefined") {
+      const url = new URL(window.location.href);
+      if (selectedSurah) {
+        url.searchParams.set("surah", selectedSurah.toString());
+      } else {
+        url.searchParams.delete("surah");
+      }
+      window.history.pushState({}, "", url.toString());
+    }
+  }, [selectedSurah]);
+
+  useEffect(() => {
+    const handlePopState = () => {
+      const params = new URLSearchParams(window.location.search);
+      const surahParam = params.get("surah");
+      if (surahParam) {
+        const parsed = parseInt(surahParam, 10);
+        if (!isNaN(parsed) && parsed >= 1 && parsed <= 114) {
+          setSelectedSurah(parsed);
+        } else {
+          setSelectedSurah(null);
+        }
+      } else {
+        setSelectedSurah(null);
+      }
+    };
+
+    window.addEventListener("popstate", handlePopState);
+    return () => window.removeEventListener("popstate", handlePopState);
+  }, []);
 
   useEffect(() => {
     if (isDarkMode) {

@@ -7,6 +7,7 @@ import {
   Settings,
   ChevronDown,
   Check,
+  Share2,
 } from "lucide-react";
 import { SurahDetail, ApiResponse } from "../types";
 import { cn } from "../lib/utils";
@@ -33,6 +34,7 @@ export function SurahView({ surahId, onBack, onNavigate }: SurahViewProps) {
   const [loading, setLoading] = useState(true);
   const [translationLangs, setTranslationLangs] = useState<string[]>(['arabic_original', 'en.sahih']);
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
+  const [showShareToast, setShowShareToast] = useState(false);
 
   const [playingAyah, setPlayingAyah] = useState<number | null>(null);
   const audioRef = useRef<HTMLAudioElement | null>(null);
@@ -134,6 +136,25 @@ export function SurahView({ surahId, onBack, onNavigate }: SurahViewProps) {
     }
   }, [playingAyah]);
 
+  const handleShare = async () => {
+    const url = window.location.href;
+    if (navigator.share) {
+      try {
+        await navigator.share({
+          title: `Surah ${arabicData?.englishName}`,
+          text: `Read Surah ${arabicData?.englishName} on Al Quran`,
+          url: url,
+        });
+      } catch (err) {
+        console.error("Error sharing:", err);
+      }
+    } else {
+      navigator.clipboard.writeText(url);
+      setShowShareToast(true);
+      setTimeout(() => setShowShareToast(false), 2000);
+    }
+  };
+
   if (loading || !arabicData) {
     return (
       <div className="flex justify-center items-center h-screen">
@@ -155,11 +176,20 @@ export function SurahView({ surahId, onBack, onNavigate }: SurahViewProps) {
           <span className="sm:hidden">Back</span>
         </button>
 
-        <div className="relative w-full sm:w-auto">
+        <div className="flex items-center gap-2 w-full sm:w-auto">
           <button
-            onClick={() => setIsDropdownOpen(!isDropdownOpen)}
-            className="flex items-center justify-between w-full sm:w-64 bg-secondary border border-border text-foreground py-2 pl-4 pr-3 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary text-sm transition-colors"
+            onClick={handleShare}
+            className="flex items-center justify-center p-2 rounded-lg bg-secondary text-foreground hover:bg-secondary/80 transition-colors"
+            title="Share Surah"
           >
+            <Share2 className="w-5 h-5" />
+          </button>
+
+          <div className="relative w-full sm:w-auto">
+            <button
+              onClick={() => setIsDropdownOpen(!isDropdownOpen)}
+              className="flex items-center justify-between w-full sm:w-64 bg-secondary border border-border text-foreground py-2 pl-4 pr-3 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary text-sm transition-colors"
+            >
             <span className="truncate">
               {translationLangs.length === 0
                 ? "Select Translations"
@@ -198,6 +228,7 @@ export function SurahView({ surahId, onBack, onNavigate }: SurahViewProps) {
               </div>
             </>
           )}
+          </div>
         </div>
       </div>
 
@@ -368,6 +399,13 @@ export function SurahView({ surahId, onBack, onNavigate }: SurahViewProps) {
           Next Surah
         </button>
       </div>
+
+      {/* Share Toast */}
+      {showShareToast && (
+        <div className="fixed bottom-4 left-1/2 -translate-x-1/2 bg-foreground text-background px-4 py-2 rounded-lg shadow-lg z-50 text-sm font-medium animate-in fade-in slide-in-from-bottom-4">
+          Link copied to clipboard!
+        </div>
+      )}
     </div>
   );
 }
