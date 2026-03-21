@@ -381,7 +381,7 @@ export function SurahView({ surahId, onBack, onNavigate }: SurahViewProps) {
 
       {/* Bismillah (except for Surah 9) */}
       {surahId !== 9 && surahId !== 1 && translationLangs.includes('arabic_original') && (
-        <div className="text-center font-arabic text-3xl md:text-4xl text-foreground mb-12 leading-loose">
+        <div className="text-center font-arabic text-xl md:text-2xl text-foreground mb-12 leading-loose">
           بِسْمِ ٱللَّهِ ٱلرَّحْمَٰنِ ٱلرَّحِيمِ
         </div>
       )}
@@ -470,11 +470,11 @@ export function SurahView({ surahId, onBack, onNavigate }: SurahViewProps) {
               <div className="flex flex-col">
                 {translationLangs.includes('arabic_original') && (
                   <div
-                    className="text-right font-arabic text-2xl md:text-3xl leading-[2.5] text-foreground"
+                    className="text-right font-arabic text-lg leading-[2.5] text-foreground"
                     dir="rtl"
                   >
                     {arabicText}{" "}
-                    <span className="inline-flex items-center justify-center w-10 h-10 rounded-full border-2 border-primary/30 text-primary text-lg ml-2">
+                    <span className="inline-flex items-center justify-center w-8 h-8 rounded-full border-2 border-primary/30 text-primary text-sm ml-2">
                       {ayah.numberInSurah}
                     </span>
                   </div>
