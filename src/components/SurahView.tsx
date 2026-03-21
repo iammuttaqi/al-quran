@@ -21,31 +21,13 @@ interface SurahViewProps {
 type TranslationLanguage = "en.sahih" | "pt.elhayek" | "bn.bengali";
 
 const TRANSLATION_OPTIONS = [
-  { id: "arabic_original", urlKey: "arabic", name: "Arabic (Original)" },
-  { id: "en.sahih", urlKey: "english", name: "English (Saheeh)" },
-  { id: "pt.elhayek", urlKey: "portuguese", name: "Portuguese (El-Hayek)" },
-  { id: "bn.bengali", urlKey: "bengali", name: "Bangla (Muhiuddin Khan)" },
+  { id: "arabic_original", name: "Arabic (Original)" },
+  { id: "en.sahih", name: "English (Saheeh)" },
+  { id: "pt.elhayek", name: "Portuguese (El-Hayek)" },
+  { id: "bn.bengali", name: "Bangla (Muhiuddin Khan)" },
 ];
 
 const ALL_LANGS = TRANSLATION_OPTIONS.map(opt => opt.id);
-
-const getLangsFromUrl = (langsParam: string | null): string[] => {
-  if (!langsParam) return ALL_LANGS;
-  
-  const urlKeys = langsParam.split(",");
-  const mappedLangs = urlKeys
-    .map(key => TRANSLATION_OPTIONS.find(opt => opt.urlKey === key)?.id)
-    .filter((id): id is string => id !== undefined);
-    
-  return mappedLangs.length > 0 ? mappedLangs : ALL_LANGS;
-};
-
-const getUrlFromLangs = (langs: string[]): string => {
-  return langs
-    .map(id => TRANSLATION_OPTIONS.find(opt => opt.id === id)?.urlKey)
-    .filter((key): key is string => key !== undefined)
-    .join(",");
-};
 
 export function SurahView({ surahId, onBack, onNavigate }: SurahViewProps) {
   const [arabicData, setArabicData] = useState<SurahDetail | null>(null);
@@ -54,10 +36,16 @@ export function SurahView({ surahId, onBack, onNavigate }: SurahViewProps) {
   const [loading, setLoading] = useState(true);
   const [translationLangs, setTranslationLangs] = useState<string[]>(() => {
     if (typeof window !== "undefined") {
-      const params = new URLSearchParams(window.location.search);
-      const langsParam = params.get("langs");
-      if (langsParam !== null) {
-        return getLangsFromUrl(langsParam);
+      const savedLangs = localStorage.getItem("selected-langs");
+      if (savedLangs) {
+        try {
+          const parsed = JSON.parse(savedLangs);
+          if (Array.isArray(parsed) && parsed.length > 0) {
+            return parsed.filter(lang => ALL_LANGS.includes(lang));
+          }
+        } catch (e) {
+          console.error("Failed to parse saved languages", e);
+        }
       }
     }
     return ALL_LANGS;
@@ -108,34 +96,9 @@ export function SurahView({ surahId, onBack, onNavigate }: SurahViewProps) {
 
   useEffect(() => {
     if (typeof window !== "undefined") {
-      const url = new URL(window.location.href);
-      const currentLangsParam = url.searchParams.get("langs");
-      const newLangsParam = getUrlFromLangs(translationLangs);
-      
-      if (currentLangsParam !== newLangsParam) {
-        if (translationLangs.length > 0) {
-          url.searchParams.set("langs", newLangsParam);
-        } else {
-          url.searchParams.set("langs", "");
-        }
-        window.history.replaceState({}, "", url.toString());
-      }
+      localStorage.setItem("selected-langs", JSON.stringify(translationLangs));
     }
   }, [translationLangs]);
-
-  useEffect(() => {
-    const handlePopState = () => {
-      const params = new URLSearchParams(window.location.search);
-      const langsParam = params.get("langs");
-      if (langsParam !== null) {
-        setTranslationLangs(getLangsFromUrl(langsParam));
-      } else {
-        setTranslationLangs(ALL_LANGS);
-      }
-    };
-    window.addEventListener("popstate", handlePopState);
-    return () => window.removeEventListener("popstate", handlePopState);
-  }, []);
 
   const toggleLanguage = (langId: string) => {
     setTranslationLangs((prev) => {

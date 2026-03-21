@@ -10,7 +10,7 @@ A beautifully crafted, modern, and responsive web application for reading and li
   - Portuguese (Samir El-Hayek)
   - Bengali (Muhiuddin Khan)
 - **🎧 Audio Playback:** Listen to high-quality audio recitations (Mishary Rashid Alafasy) for each Ayah.
-- **🔗 Smart URL Sharing:** Share specific Surahs, Ayahs, and your preferred language selections easily via clean URLs (e.g., `?langs=arabic,english,portuguese&surah=2&ayah=4`).
+- **🔗 Smart URL Sharing:** Share specific Surahs and Ayahs easily via clean URLs (e.g., `?surah=2&ayah=4`).
 - **🔖 Bookmarking:** Save your progress by bookmarking specific Ayahs. Your bookmarks are saved locally on your device.
 - **📱 Responsive Design:** A mobile-first, highly responsive UI that looks beautiful on phones, tablets, and desktop computers.
 - **🎨 Modern UI/UX:** Clean typography, smooth transitions, and an intuitive interface designed for readability.
