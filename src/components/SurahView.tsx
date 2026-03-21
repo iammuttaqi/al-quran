@@ -29,6 +29,15 @@ const TRANSLATION_OPTIONS = [
 
 const ALL_LANGS = TRANSLATION_OPTIONS.map(opt => opt.id);
 
+const getLanguageName = (identifier: string): string => {
+  switch (identifier) {
+    case "en.sahih": return "English";
+    case "pt.elhayek": return "Portuguese";
+    case "bn.bengali": return "Bangla";
+    default: return identifier;
+  }
+};
+
 export function SurahView({ surahId, onBack, onNavigate }: SurahViewProps) {
   const [arabicData, setArabicData] = useState<SurahDetail | null>(null);
   const [translationsData, setTranslationsData] = useState<SurahDetail[]>([]);
@@ -454,7 +463,7 @@ export function SurahView({ surahId, onBack, onNavigate }: SurahViewProps) {
                         )}
                       >
                         <span className="text-[10px] font-bold uppercase tracking-wider text-primary/70 block mb-1 font-sans">
-                          {transData.edition.englishName}
+                          {getLanguageName(transData.edition.identifier)}
                         </span>
                         {transData.ayahs[index].text}
                       </div>
