@@ -73,6 +73,28 @@
     --input: 240 3.7% 15.9%;
     --ring: 142.4 71.8% 29.2%;
   }
+
+  .sepia {
+    --background: 40 33% 96%;
+    --foreground: 24 20% 25%;
+    --card: 40 30% 92%;
+    --card-foreground: 24 20% 25%;
+    --popover: 40 33% 96%;
+    --popover-foreground: 24 20% 25%;
+    --primary: 24 40% 45%;
+    --primary-foreground: 40 33% 96%;
+    --secondary: 40 20% 88%;
+    --secondary-foreground: 24 20% 25%;
+    --muted: 40 20% 88%;
+    --muted-foreground: 24 10% 45%;
+    --accent: 40 20% 88%;
+    --accent-foreground: 24 20% 25%;
+    --destructive: 0 84.2% 60.2%;
+    --destructive-foreground: 0 0% 98%;
+    --border: 40 20% 85%;
+    --input: 40 20% 85%;
+    --ring: 24 40% 45%;
+  }
 }
 
 @layer base {

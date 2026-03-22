@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { Moon, Sun } from "lucide-react";
+import { Moon, Sun, BookOpen } from "lucide-react";
 import { SurahList } from "./components/SurahList";
 import { SurahView } from "./components/SurahView";
 
@@ -18,14 +18,15 @@ export default function App() {
     return null;
   });
 
-  const [isDarkMode, setIsDarkMode] = useState(() => {
+  const [theme, setTheme] = useState<'light' | 'dark' | 'sepia'>(() => {
     if (typeof window !== "undefined") {
-      return (
-        document.documentElement.classList.contains("dark") ||
-        window.matchMedia("(prefers-color-scheme: dark)").matches
-      );
+      const savedTheme = localStorage.getItem("app-theme");
+      if (savedTheme === 'light' || savedTheme === 'dark' || savedTheme === 'sepia') {
+        return savedTheme;
+      }
+      return window.matchMedia("(prefers-color-scheme: dark)").matches ? 'dark' : 'light';
     }
-    return false;
+    return 'light';
   });
 
   useEffect(() => {
@@ -68,12 +69,22 @@ export default function App() {
   }, []);
 
   useEffect(() => {
-    if (isDarkMode) {
-      document.documentElement.classList.add("dark");
-    } else {
-      document.documentElement.classList.remove("dark");
+    if (typeof window !== "undefined") {
+      localStorage.setItem("app-theme", theme);
+      document.documentElement.classList.remove("light", "dark", "sepia");
+      if (theme !== 'light') {
+        document.documentElement.classList.add(theme);
+      }
     }
-  }, [isDarkMode]);
+  }, [theme]);
+
+  const cycleTheme = () => {
+    setTheme(prev => {
+      if (prev === 'light') return 'dark';
+      if (prev === 'dark') return 'sepia';
+      return 'light';
+    });
+  };
 
   useEffect(() => {
     if (!selectedSurah) {
@@ -83,7 +94,7 @@ export default function App() {
 
   return (
     <div className="min-h-screen bg-background text-foreground transition-colors duration-300">
-      <header className="w-full border-b border-border bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
+      <header className="w-full border-b border-border/50 bg-background/70 backdrop-blur-xl sticky top-0 z-50">
         <div className="container mx-auto px-4 h-14 flex items-center justify-between max-w-4xl">
           <div
             className="font-bold text-xl tracking-tight cursor-pointer text-primary"
@@ -92,20 +103,19 @@ export default function App() {
             Al Quran
           </div>
           <button
-            onClick={() => setIsDarkMode(!isDarkMode)}
-            className="p-2 rounded-full hover:bg-secondary transition-colors"
-            aria-label="Toggle dark mode"
+            onClick={cycleTheme}
+            className="p-2 rounded-full hover:bg-secondary transition-all active:scale-95"
+            aria-label="Toggle theme"
+            title={`Current theme: ${theme}`}
           >
-            {isDarkMode ? (
-              <Sun className="w-5 h-5" />
-            ) : (
-              <Moon className="w-5 h-5" />
-            )}
+            {theme === 'light' && <Sun className="w-5 h-5" />}
+            {theme === 'dark' && <Moon className="w-5 h-5" />}
+            {theme === 'sepia' && <BookOpen className="w-5 h-5" />}
           </button>
         </div>
       </header>
 
-      <main>
+      <main className="animate-in fade-in duration-500">
         {selectedSurah ? (
           <SurahView
             surahId={selectedSurah}

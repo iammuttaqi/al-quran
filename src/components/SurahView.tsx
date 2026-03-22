@@ -267,8 +267,28 @@ export function SurahView({ surahId, onBack, onNavigate }: SurahViewProps) {
 
   if (loading || !arabicData) {
     return (
-      <div className="flex justify-center items-center h-screen">
-        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary"></div>
+      <div className="max-w-4xl mx-auto px-4 py-8 pb-24 animate-pulse">
+        <div className="h-14 bg-secondary/50 rounded-lg w-full mb-8"></div>
+        <div className="bg-secondary/30 rounded-2xl p-8 mb-12 h-48 w-full"></div>
+        <div className="space-y-8">
+          {[...Array(5)].map((_, i) => (
+            <div key={i} className="p-6 rounded-2xl border border-border bg-card">
+              <div className="flex justify-between items-start mb-6">
+                <div className="w-8 h-8 rounded-full bg-secondary/50"></div>
+                <div className="flex gap-2">
+                  <div className="w-8 h-8 rounded-full bg-secondary/50"></div>
+                  <div className="w-8 h-8 rounded-full bg-secondary/50"></div>
+                </div>
+              </div>
+              <div className="flex flex-col space-y-4">
+                <div className="h-8 bg-secondary/40 rounded w-3/4 self-end"></div>
+                <div className="h-8 bg-secondary/40 rounded w-1/2 self-end"></div>
+                <div className="h-4 bg-secondary/30 rounded w-full mt-4"></div>
+                <div className="h-4 bg-secondary/30 rounded w-5/6"></div>
+              </div>
+            </div>
+          ))}
+        </div>
       </div>
     );
   }
@@ -276,10 +296,10 @@ export function SurahView({ surahId, onBack, onNavigate }: SurahViewProps) {
   return (
     <div className="max-w-4xl mx-auto px-4 py-8 pb-24">
       {/* Header */}
-      <div className="sticky top-0 z-40 bg-background/95 backdrop-blur-md border-b border-border pb-4 mb-8 pt-4 flex flex-row items-center justify-between gap-3">
+      <div className="sticky top-14 z-40 bg-background/70 backdrop-blur-xl border-b border-border/50 pb-4 mb-8 pt-4 flex flex-row items-center justify-between gap-3 -mx-4 px-4 sm:mx-0 sm:px-0">
         <button
           onClick={onBack}
-          className="flex items-center text-muted-foreground hover:text-foreground transition-colors shrink-0"
+          className="flex items-center text-muted-foreground hover:text-foreground transition-all active:scale-95 shrink-0"
         >
           <ArrowLeft className="w-5 h-5 mr-1 sm:mr-2" />
           <span className="hidden sm:inline">Back to Surahs</span>
@@ -289,7 +309,7 @@ export function SurahView({ surahId, onBack, onNavigate }: SurahViewProps) {
         <div className="flex items-center gap-2 w-full sm:w-auto">
           <button
             onClick={handleShare}
-            className="flex items-center justify-center p-2 rounded-lg bg-secondary text-foreground hover:bg-secondary/80 transition-colors"
+            className="flex items-center justify-center p-2 rounded-lg bg-secondary text-foreground hover:bg-secondary/80 transition-all active:scale-95"
             title="Share Surah"
           >
             <Share2 className="w-5 h-5" />
@@ -298,7 +318,7 @@ export function SurahView({ surahId, onBack, onNavigate }: SurahViewProps) {
           <div className="relative w-full sm:w-auto" ref={dropdownRef}>
             <button
               onClick={() => setIsDropdownOpen(!isDropdownOpen)}
-              className="flex items-center justify-between w-full sm:w-64 bg-secondary border border-border text-foreground py-2 pl-4 pr-3 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary text-sm transition-colors"
+              className="flex items-center justify-between w-full sm:w-64 bg-secondary border border-border text-foreground py-2 pl-4 pr-3 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary text-sm transition-all active:scale-[0.98]"
             >
             <span className="truncate">
               {translationLangs.length === 0
@@ -378,11 +398,12 @@ export function SurahView({ surahId, onBack, onNavigate }: SurahViewProps) {
             <div
               key={ayah.number}
               className={cn(
-                "p-6 rounded-2xl border transition-all duration-300",
+                "p-6 rounded-2xl border transition-all duration-300 animate-in fade-in slide-in-from-bottom-4",
                 isBookmarked
                   ? "border-primary bg-primary/5 shadow-sm"
                   : "border-border bg-card hover:border-primary/30",
               )}
+              style={{ animationDelay: `${Math.min(index * 50, 500)}ms`, animationFillMode: 'both' }}
               id={`ayah-${ayah.numberInSurah}`}
             >
               <div className="flex justify-between items-start mb-6">
@@ -394,7 +415,7 @@ export function SurahView({ surahId, onBack, onNavigate }: SurahViewProps) {
                   <button
                     onClick={() => toggleBookmark(ayah.numberInSurah)}
                     className={cn(
-                      "p-2 rounded-full transition-colors",
+                      "p-2 rounded-full transition-all active:scale-95",
                       isBookmarked
                         ? "text-primary bg-primary/10"
                         : "text-muted-foreground hover:bg-secondary hover:text-foreground",
@@ -410,7 +431,7 @@ export function SurahView({ surahId, onBack, onNavigate }: SurahViewProps) {
 
                   <button
                     onClick={() => shareAyah(ayah.numberInSurah)}
-                    className="p-2 rounded-full text-muted-foreground hover:bg-secondary hover:text-foreground transition-colors"
+                    className="p-2 rounded-full text-muted-foreground hover:bg-secondary hover:text-foreground transition-all active:scale-95"
                     title="Share this ayah"
                   >
                     <Share2 className="w-4 h-4" />
@@ -422,7 +443,7 @@ export function SurahView({ surahId, onBack, onNavigate }: SurahViewProps) {
                         playAudio(ayah.numberInSurah, audio.audio!)
                       }
                       className={cn(
-                        "p-2 rounded-full transition-colors",
+                        "p-2 rounded-full transition-all active:scale-95",
                         isPlaying
                           ? "text-primary bg-primary/10"
                           : "text-muted-foreground hover:bg-secondary hover:text-foreground",
@@ -486,14 +507,14 @@ export function SurahView({ surahId, onBack, onNavigate }: SurahViewProps) {
             }
           }}
           disabled={surahId === 1}
-          className="w-full sm:w-auto px-4 py-2 text-sm font-medium text-foreground bg-secondary rounded-lg disabled:opacity-50 disabled:cursor-not-allowed hover:bg-secondary/80 transition-colors order-2 sm:order-1"
+          className="w-full sm:w-auto px-4 py-2 text-sm font-medium text-foreground bg-secondary rounded-lg disabled:opacity-50 disabled:cursor-not-allowed hover:bg-secondary/80 transition-all active:scale-95 order-2 sm:order-1"
         >
           Previous Surah
         </button>
         
         <button
           onClick={onBack}
-          className="w-full sm:w-auto px-4 py-2 text-sm font-medium text-muted-foreground hover:text-foreground bg-secondary/50 rounded-lg hover:bg-secondary transition-colors order-1 sm:order-2"
+          className="w-full sm:w-auto px-4 py-2 text-sm font-medium text-muted-foreground hover:text-foreground bg-secondary/50 rounded-lg hover:bg-secondary transition-all active:scale-95 order-1 sm:order-2"
         >
           Back to Surahs
         </button>
@@ -506,7 +527,7 @@ export function SurahView({ surahId, onBack, onNavigate }: SurahViewProps) {
             }
           }}
           disabled={surahId === 114}
-          className="w-full sm:w-auto px-4 py-2 text-sm font-medium text-foreground bg-secondary rounded-lg disabled:opacity-50 disabled:cursor-not-allowed hover:bg-secondary/80 transition-colors order-3"
+          className="w-full sm:w-auto px-4 py-2 text-sm font-medium text-foreground bg-secondary rounded-lg disabled:opacity-50 disabled:cursor-not-allowed hover:bg-secondary/80 transition-all active:scale-95 order-3"
         >
           Next Surah
         </button>

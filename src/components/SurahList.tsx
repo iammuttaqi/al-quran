@@ -36,8 +36,28 @@ export function SurahList({ onSelectSurah }: SurahListProps) {
 
   if (loading) {
     return (
-      <div className="flex justify-center items-center h-64">
-        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary"></div>
+      <div className="max-w-4xl mx-auto px-4 py-8 animate-pulse">
+        <div className="mb-8 text-center flex flex-col items-center">
+          <div className="h-10 bg-secondary/50 rounded w-48 mb-4"></div>
+          <div className="h-4 bg-secondary/30 rounded w-64"></div>
+        </div>
+        <div className="relative mb-8 max-w-md mx-auto">
+          <div className="h-12 bg-secondary/40 rounded-xl w-full"></div>
+        </div>
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+          {[...Array(12)].map((_, i) => (
+            <div key={i} className="flex items-center justify-between p-5 bg-card border border-border/60 rounded-2xl">
+              <div className="flex items-center gap-4">
+                <div className="w-10 h-10 rounded-lg bg-secondary/50"></div>
+                <div className="space-y-2">
+                  <div className="h-4 bg-secondary/40 rounded w-24"></div>
+                  <div className="h-3 bg-secondary/30 rounded w-16"></div>
+                </div>
+              </div>
+              <div className="h-6 bg-secondary/40 rounded w-16"></div>
+            </div>
+          ))}
+        </div>
       </div>
     );
   }
@@ -65,11 +85,12 @@ export function SurahList({ onSelectSurah }: SurahListProps) {
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-        {filteredSurahs.map((surah) => (
+        {filteredSurahs.map((surah, index) => (
           <button
             key={surah.number}
             onClick={() => onSelectSurah(surah.number)}
-            className="flex items-center justify-between p-5 bg-card border border-border/60 rounded-2xl hover:border-primary/50 hover:shadow-sm transition-all text-left group"
+            className="flex items-center justify-between p-5 bg-card border border-border/60 rounded-2xl hover:border-primary/50 hover:shadow-sm transition-all active:scale-[0.98] text-left group animate-in fade-in slide-in-from-bottom-4"
+            style={{ animationDelay: `${Math.min(index * 30, 500)}ms`, animationFillMode: 'both' }}
           >
             <div className="flex items-center gap-4">
               <div className="relative flex items-center justify-center w-10 h-10 rounded-lg bg-secondary/50 text-secondary-foreground font-medium text-sm group-hover:bg-primary/10 group-hover:text-primary transition-colors">
