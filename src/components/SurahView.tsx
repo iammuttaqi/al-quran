@@ -13,6 +13,7 @@ import {
   Loader2,
   X,
   BookOpen,
+  Languages
 } from "lucide-react";
 import { SurahDetail, ApiResponse } from "../types";
 import { cn } from "../lib/utils";
@@ -689,7 +690,7 @@ Please provide the Tafsir in the following language(s): ${langsString}.${multiLa
                     {literalLoading === ayah.numberInSurah ? (
                       <Loader2 className="w-4 h-4 animate-spin" />
                     ) : (
-                      <BookOpen className="w-4 h-4" />
+                      <Languages className="w-4 h-4" />
                     )}
                     <span className="text-xs font-medium hidden sm:inline-block">Literal</span>
                   </button>
@@ -872,7 +873,7 @@ Please provide the Tafsir in the following language(s): ${langsString}.${multiLa
           <div className="bg-card text-card-foreground border border-border shadow-lg rounded-xl w-full max-w-2xl max-h-[80vh] flex flex-col animate-in zoom-in-95 duration-200">
             <div className="flex items-center justify-between p-4 border-b border-border">
               <div className="flex items-center gap-2 text-primary">
-                <BookOpen className="w-5 h-5" />
+                <Languages className="w-5 h-5" />
                 <h3 className="font-semibold">Literal Translation - Ayah {expandedLiteral}</h3>
               </div>
               <div className="flex items-center gap-1">
