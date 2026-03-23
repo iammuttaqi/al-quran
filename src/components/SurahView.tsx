@@ -1,4 +1,5 @@
 import { useState, useEffect, useRef } from "react";
+import { Helmet } from "react-helmet-async";
 import {
   ArrowLeft,
   Play,
@@ -333,6 +334,18 @@ export function SurahView({ surahId, onBack, onNavigate }: SurahViewProps) {
 
   return (
     <div className="max-w-4xl mx-auto px-4 py-4 pb-16">
+      <Helmet>
+        <title>Surah {arabicData.englishName} ({arabicData.name}) - Al Quran</title>
+        <meta name="description" content={`Read and listen to Surah ${arabicData.englishName} (${arabicData.name}) online with translations in multiple languages. ${arabicData.englishNameTranslation}.`} />
+        <meta property="og:title" content={`Surah ${arabicData.englishName} - Al Quran`} />
+        <meta property="og:description" content={`Read and listen to Surah ${arabicData.englishName} (${arabicData.name}) online with translations in multiple languages. ${arabicData.englishNameTranslation}.`} />
+        <meta property="og:image" content="/seo-surah.jpg" />
+        <meta property="og:type" content="article" />
+        <meta name="twitter:card" content="summary_large_image" />
+        <meta name="twitter:title" content={`Surah ${arabicData.englishName} - Al Quran`} />
+        <meta name="twitter:description" content={`Read and listen to Surah ${arabicData.englishName} (${arabicData.name}) online with translations in multiple languages. ${arabicData.englishNameTranslation}.`} />
+        <meta name="twitter:image" content="/seo-surah.jpg" />
+      </Helmet>
       {/* Header */}
       <div className="sticky top-0 z-40 bg-background/70 backdrop-blur-xl border-b border-border/50 pb-3 mb-4 pt-3 flex flex-row items-center justify-between gap-3 -mx-4 px-4 sm:mx-0 sm:px-0">
         <button

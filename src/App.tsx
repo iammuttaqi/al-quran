@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react";
 import { Moon, Sun, BookOpen } from "lucide-react";
+import { Helmet } from "react-helmet-async";
 import { SurahList } from "./components/SurahList";
 import { SurahView } from "./components/SurahView";
 
@@ -94,6 +95,20 @@ export default function App() {
 
   return (
     <div className="min-h-screen bg-background text-foreground transition-colors duration-300">
+      {!selectedSurah && (
+        <Helmet>
+          <title>Al Quran - Read and Listen Online</title>
+          <meta name="description" content="Read, listen, and study the Holy Quran online with translations in multiple languages. A beautiful, ad-free, and accessible Quran reading experience." />
+          <meta property="og:title" content="Al Quran - Read and Listen Online" />
+          <meta property="og:description" content="Read, listen, and study the Holy Quran online with translations in multiple languages. A beautiful, ad-free, and accessible Quran reading experience." />
+          <meta property="og:image" content="/seo-home.jpg" />
+          <meta property="og:type" content="website" />
+          <meta name="twitter:card" content="summary_large_image" />
+          <meta name="twitter:title" content="Al Quran - Read and Listen Online" />
+          <meta name="twitter:description" content="Read, listen, and study the Holy Quran online with translations in multiple languages. A beautiful, ad-free, and accessible Quran reading experience." />
+          <meta name="twitter:image" content="/seo-home.jpg" />
+        </Helmet>
+      )}
       <header className="w-full border-b border-border/50 bg-background/70 backdrop-blur-xl">
         <div className="container mx-auto px-4 h-14 flex items-center justify-between max-w-4xl">
           <div
