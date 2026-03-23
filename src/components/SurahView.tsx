@@ -71,6 +71,39 @@ export function SurahView({ surahId, onBack, onNavigate }: SurahViewProps) {
     return saved ? parseInt(saved, 10) : null;
   });
 
+  const wakeLockRef = useRef<any>(null);
+
+  const requestWakeLock = async () => {
+    try {
+      if ('wakeLock' in navigator) {
+        wakeLockRef.current = await (navigator as any).wakeLock.request('screen');
+      }
+    } catch (err) {
+      console.error('Wake Lock error:', err);
+    }
+  };
+
+  const releaseWakeLock = async () => {
+    try {
+      if (wakeLockRef.current) {
+        await wakeLockRef.current.release();
+        wakeLockRef.current = null;
+      }
+    } catch (err) {
+      console.error('Wake Lock release error:', err);
+    }
+  };
+
+  useEffect(() => {
+    const handleVisibilityChange = async () => {
+      if (document.visibilityState === 'visible' && playingAyah !== null) {
+        await requestWakeLock();
+      }
+    };
+    document.addEventListener('visibilitychange', handleVisibilityChange);
+    return () => document.removeEventListener('visibilitychange', handleVisibilityChange);
+  }, [playingAyah]);
+
   useEffect(() => {
     setLoading(true);
     // Fetch Arabic, Translations, and Audio
@@ -129,10 +162,11 @@ export function SurahView({ surahId, onBack, onNavigate }: SurahViewProps) {
     }
   };
 
-  const playAudio = (ayahNumber: number, audioUrl: string) => {
+  const playAudio = async (ayahNumber: number, audioUrl: string) => {
     if (playingAyah === ayahNumber) {
       audioRef.current?.pause();
       setPlayingAyah(null);
+      await releaseWakeLock();
     } else {
       if (audioRef.current) {
         audioRef.current.pause();
@@ -142,8 +176,9 @@ export function SurahView({ surahId, onBack, onNavigate }: SurahViewProps) {
       audioRef.current = audio;
       audio.play();
       setPlayingAyah(ayahNumber);
+      await requestWakeLock();
 
-      audio.onended = () => {
+      audio.onended = async () => {
         setPlayingAyah(null);
         // Auto-play next ayah (optional feature)
         const nextAyah = audioData?.ayahs.find(
@@ -151,6 +186,8 @@ export function SurahView({ surahId, onBack, onNavigate }: SurahViewProps) {
         );
         if (nextAyah && nextAyah.audio) {
           playAudio(nextAyah.numberInSurah, nextAyah.audio);
+        } else {
+          await releaseWakeLock();
         }
       };
     }
@@ -162,6 +199,7 @@ export function SurahView({ surahId, onBack, onNavigate }: SurahViewProps) {
       if (audioRef.current) {
         audioRef.current.pause();
       }
+      releaseWakeLock();
     };
   }, []);
 
