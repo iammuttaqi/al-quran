@@ -17,7 +17,7 @@ export default defineConfig(({mode}) => {
           name: 'Al Quran Digital',
           short_name: 'Al Quran',
           description: 'A beautifully crafted, modern, and responsive web application for reading and listening to the Holy Quran.',
-          theme_color: '#10b981',
+          // theme_color: '#10b981',
           icons: [
             {
               src: 'pwa-icon.svg',
