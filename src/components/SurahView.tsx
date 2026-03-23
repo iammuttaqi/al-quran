@@ -8,9 +8,15 @@ import {
   ChevronDown,
   Check,
   Share2,
+  Copy,
+  Sparkles,
+  Loader2,
+  X,
 } from "lucide-react";
 import { SurahDetail, ApiResponse } from "../types";
 import { cn } from "../lib/utils";
+import { GoogleGenAI } from "@google/genai";
+import Markdown from "react-markdown";
 
 interface SurahViewProps {
   surahId: number;
@@ -71,6 +77,12 @@ export function SurahView({ surahId, onBack, onNavigate }: SurahViewProps) {
     return saved ? parseInt(saved, 10) : null;
   });
 
+  const [tafsirLoading, setTafsirLoading] = useState<number | null>(null);
+  const [tafsirData, setTafsirData] = useState<{ [ayahNumber: number]: string }>({});
+  const [expandedTafsir, setExpandedTafsir] = useState<number | null>(null);
+  const [showCopyToast, setShowCopyToast] = useState(false);
+  const [showTafsirCopyToast, setShowTafsirCopyToast] = useState(false);
+
   const wakeLockRef = useRef<any>(null);
 
   const requestWakeLock = async () => {
@@ -120,6 +132,18 @@ export function SurahView({ surahId, onBack, onNavigate }: SurahViewProps) {
         setAudioData(data.data[audioIndex]);
         
         const translations = data.data.slice(1, audioIndex);
+        
+        const langOrder = ['en.sahih', 'pt.elhayek', 'bn.bengali'];
+        translations.sort((a, b) => {
+          const indexA = langOrder.indexOf(a.edition.identifier);
+          const indexB = langOrder.indexOf(b.edition.identifier);
+          
+          if (indexA !== -1 && indexB !== -1) return indexA - indexB;
+          if (indexA !== -1) return -1;
+          if (indexB !== -1) return 1;
+          return a.edition.identifier.localeCompare(b.edition.identifier);
+        });
+
         setTranslationsData(translations);
         
         setLoading(false);
@@ -208,7 +232,7 @@ export function SurahView({ surahId, onBack, onNavigate }: SurahViewProps) {
     if (playingAyah !== null) {
       const element = document.getElementById(`ayah-${playingAyah}`);
       if (element) {
-        element.scrollIntoView({ behavior: "smooth", block: "center" });
+        element.scrollIntoView({ behavior: "smooth", block: "start" });
       }
     }
   }, [playingAyah]);
@@ -232,8 +256,15 @@ export function SurahView({ surahId, onBack, onNavigate }: SurahViewProps) {
   // Scroll to top or specific ayah on load
   useEffect(() => {
     if (!loading && arabicData) {
-      const params = new URLSearchParams(window.location.search);
-      const ayahParam = params.get("ayah");
+      const pathParts = window.location.pathname.split('/').filter(Boolean);
+      let ayahParam = null;
+      if (pathParts.length > 1) {
+        ayahParam = pathParts[1];
+      } else {
+        // Fallback for old query param format
+        const params = new URLSearchParams(window.location.search);
+        ayahParam = params.get("ayah");
+      }
       
       if (ayahParam) {
         const parsedAyah = parseInt(ayahParam, 10);
@@ -242,7 +273,7 @@ export function SurahView({ surahId, onBack, onNavigate }: SurahViewProps) {
           setTimeout(() => {
             const element = document.getElementById(`ayah-${parsedAyah}`);
             if (element) {
-              element.scrollIntoView({ behavior: "smooth", block: "center" });
+              element.scrollIntoView({ behavior: "smooth", block: "start" });
               // Add a brief highlight effect
               element.classList.add("ring-2", "ring-primary", "ring-offset-2", "ring-offset-background");
               setTimeout(() => {
@@ -284,9 +315,7 @@ export function SurahView({ surahId, onBack, onNavigate }: SurahViewProps) {
   };
 
   const shareAyah = async (ayahNumber: number) => {
-    const url = new URL(window.location.href);
-    url.searchParams.set("ayah", ayahNumber.toString());
-    const shareUrl = url.toString();
+    const shareUrl = `${window.location.origin}/${surahId}/${ayahNumber}`;
     
     // Update URL without reloading
     window.history.replaceState({}, "", shareUrl);
@@ -310,6 +339,80 @@ export function SurahView({ surahId, onBack, onNavigate }: SurahViewProps) {
       navigator.clipboard.writeText(shareUrl);
       setShowShareToast(true);
       setTimeout(() => setShowShareToast(false), 2000);
+    }
+  };
+
+  const copyAyah = (ayahNumber: number, arabicText: string) => {
+    const arabicNumerals = ayahNumber.toString().replace(/\d/g, (d) => '٠١٢٣٤٥٦٧٨٩'[d as any]);
+    
+    let textToCopy = `[${surahId}:${ayahNumber}] Surah ${arabicData?.englishName}\n\n`;
+    if (translationLangs.includes('arabic_original')) {
+      textToCopy += `${arabicText} ﴿${arabicNumerals}﴾\n\n`;
+    }
+    
+    translationsData.forEach(t => {
+      textToCopy += `[${getLanguageName(t.edition.identifier)}]\n${ayahNumber}. ${t.ayahs[ayahNumber - 1].text}\n\n`;
+    });
+
+    navigator.clipboard.writeText(textToCopy.trim());
+    setShowCopyToast(true);
+    setTimeout(() => setShowCopyToast(false), 2000);
+  };
+
+  const copyTafsir = (ayahNumber: number) => {
+    const tafsirText = tafsirData[ayahNumber];
+    if (!tafsirText) return;
+    
+    const textToCopy = `[${surahId}:${ayahNumber}] Surah ${arabicData?.englishName} - AI Tafsir\n\n${tafsirText}`;
+    navigator.clipboard.writeText(textToCopy.trim());
+    setShowTafsirCopyToast(true);
+    setTimeout(() => setShowTafsirCopyToast(false), 2000);
+  };
+
+  const fetchTafsir = async (ayahNumber: number, arabicText: string) => {
+    setExpandedTafsir(ayahNumber);
+    if (tafsirData[ayahNumber]) {
+      return;
+    }
+
+    setTafsirLoading(ayahNumber);
+
+    try {
+      const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY });
+      let translationText = "";
+      if (translationsData.length > 0) {
+        translationText = translationsData[0].ayahs[ayahNumber - 1].text;
+      }
+
+      const targetLangs = translationLangs
+        .filter(id => id !== 'arabic_original')
+        .map(id => getLanguageName(id));
+      
+      const langsString = targetLangs.length > 0 ? targetLangs.join(" and ") : "English";
+      const multiLangInstruction = targetLangs.length > 1 
+        ? `\n\nIMPORTANT: Since multiple languages are requested, provide the Tafsir in EACH of the requested languages (${langsString}), separated by a horizontal rule (---) and clear headings (e.g., ### English, ### Bangla).` 
+        : "";
+
+      const prompt = `Provide a brief, authentic, and easy-to-understand Tafsir (explanation) for Surah ${arabicData?.englishName}, Ayah ${ayahNumber}.
+      
+Arabic: ${arabicText}
+Translation: ${translationText}
+
+Focus on the context of revelation (if applicable), key themes, and practical lessons. Keep it concise (around 2-3 paragraphs per language). Format using Markdown.
+
+Please provide the Tafsir in the following language(s): ${langsString}.${multiLangInstruction}`;
+
+      const response = await ai.models.generateContent({
+        model: "gemini-3-flash-preview",
+        contents: prompt,
+      });
+
+      setTafsirData(prev => ({ ...prev, [ayahNumber]: response.text || "No explanation available." }));
+    } catch (error) {
+      console.error("Error fetching Tafsir:", error);
+      setTafsirData(prev => ({ ...prev, [ayahNumber]: "Failed to load Tafsir. Please try again later." }));
+    } finally {
+      setTafsirLoading(null);
     }
   };
 
@@ -411,7 +514,7 @@ export function SurahView({ surahId, onBack, onNavigate }: SurahViewProps) {
           {arabicData.name}
         </h1>
         <h2 className="text-2xl font-semibold text-foreground mb-2">
-          {arabicData.englishName}
+          {surahId}. {arabicData.englishName}
         </h2>
         <p className="text-muted-foreground uppercase tracking-widest text-sm font-medium">
           {arabicData.englishNameTranslation} • {arabicData.revelationType} •{" "}
@@ -446,7 +549,7 @@ export function SurahView({ surahId, onBack, onNavigate }: SurahViewProps) {
             <div
               key={ayah.number}
               className={cn(
-                "p-4 rounded-xl border transition-all duration-300 animate-in fade-in slide-in-from-bottom-4",
+                "p-4 rounded-xl border transition-all duration-300 animate-in fade-in slide-in-from-bottom-4 scroll-mt-24",
                 isBookmarked
                   ? "border-primary bg-primary/5 shadow-sm"
                   : "border-border bg-card hover:border-primary/30",
@@ -483,6 +586,32 @@ export function SurahView({ surahId, onBack, onNavigate }: SurahViewProps) {
                     title="Share this ayah"
                   >
                     <Share2 className="w-4 h-4" />
+                  </button>
+
+                  <button
+                    onClick={() => copyAyah(ayah.numberInSurah, arabicText)}
+                    className="p-2 rounded-full text-muted-foreground hover:bg-secondary hover:text-foreground transition-all active:scale-95"
+                    title="Copy this ayah"
+                  >
+                    <Copy className="w-4 h-4" />
+                  </button>
+
+                  <button
+                    onClick={() => fetchTafsir(ayah.numberInSurah, arabicText)}
+                    className={cn(
+                      "p-2 rounded-full transition-all active:scale-95 flex items-center gap-1.5",
+                      expandedTafsir === ayah.numberInSurah
+                        ? "text-primary bg-primary/10"
+                        : "text-muted-foreground hover:bg-secondary hover:text-foreground",
+                    )}
+                    title="AI Tafsir (Explanation)"
+                  >
+                    {tafsirLoading === ayah.numberInSurah ? (
+                      <Loader2 className="w-4 h-4 animate-spin" />
+                    ) : (
+                      <Sparkles className="w-4 h-4" />
+                    )}
+                    <span className="text-xs font-medium hidden sm:inline-block">Tafsir</span>
                   </button>
 
                   {audio?.audio && (
@@ -582,6 +711,71 @@ export function SurahView({ surahId, onBack, onNavigate }: SurahViewProps) {
       {showShareToast && (
         <div className="fixed bottom-4 left-1/2 -translate-x-1/2 bg-foreground text-background px-4 py-2 rounded-lg shadow-lg z-50 text-sm font-medium animate-in fade-in slide-in-from-bottom-4">
           Link copied to clipboard!
+        </div>
+      )}
+
+      {/* Copy Toast */}
+      {showCopyToast && (
+        <div className="fixed bottom-4 left-1/2 -translate-x-1/2 bg-foreground text-background px-4 py-2 rounded-lg shadow-lg z-50 text-sm font-medium animate-in fade-in slide-in-from-bottom-4">
+          Ayah copied to clipboard!
+        </div>
+      )}
+
+      {/* Tafsir Copy Toast */}
+      {showTafsirCopyToast && (
+        <div className="fixed bottom-4 left-1/2 -translate-x-1/2 bg-foreground text-background px-4 py-2 rounded-lg shadow-lg z-50 text-sm font-medium animate-in fade-in slide-in-from-bottom-4">
+          Tafsir copied to clipboard!
+        </div>
+      )}
+
+      {/* Tafsir Modal */}
+      {expandedTafsir !== null && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-background/80 backdrop-blur-sm animate-in fade-in duration-200">
+          <div className="bg-card text-card-foreground border border-border shadow-lg rounded-xl w-full max-w-2xl max-h-[80vh] flex flex-col animate-in zoom-in-95 duration-200">
+            <div className="flex items-center justify-between p-4 border-b border-border">
+              <div className="flex items-center gap-2 text-primary">
+                <Sparkles className="w-5 h-5" />
+                <h3 className="font-semibold">AI Tafsir - Ayah {expandedTafsir}</h3>
+              </div>
+              <div className="flex items-center gap-1">
+                {!tafsirLoading && tafsirData[expandedTafsir] && (
+                  <button
+                    onClick={() => copyTafsir(expandedTafsir)}
+                    className="p-2 rounded-md hover:bg-secondary text-muted-foreground transition-colors"
+                    title="Copy Tafsir"
+                  >
+                    <Copy className="w-4 h-4" />
+                  </button>
+                )}
+                <button
+                  onClick={() => setExpandedTafsir(null)}
+                  className="p-2 rounded-md hover:bg-secondary text-muted-foreground transition-colors"
+                >
+                  <X className="w-5 h-5" />
+                </button>
+              </div>
+            </div>
+            <div className="p-4 overflow-y-auto">
+              {tafsirLoading === expandedTafsir ? (
+                <div className="flex flex-col items-center justify-center py-8 text-muted-foreground gap-3">
+                  <Loader2 className="w-8 h-8 animate-spin text-primary" />
+                  <p>Generating explanation...</p>
+                </div>
+              ) : (
+                <div className="text-sm text-muted-foreground leading-relaxed prose prose-sm sm:prose-base dark:prose-invert max-w-none">
+                  <Markdown
+                    components={{
+                      hr: ({node, ...props}) => <hr className="my-8 border-t-2 border-border/60" {...props} />,
+                      h3: ({node, ...props}) => <h3 className="text-lg font-semibold text-foreground mt-8 mb-4" {...props} />,
+                      h2: ({node, ...props}) => <h2 className="text-xl font-semibold text-foreground mt-8 mb-4" {...props} />,
+                    }}
+                  >
+                    {tafsirData[expandedTafsir]}
+                  </Markdown>
+                </div>
+              )}
+            </div>
+          </div>
         </div>
       )}
     </div>

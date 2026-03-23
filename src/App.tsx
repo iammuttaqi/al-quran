@@ -6,6 +6,15 @@ import { SurahView } from "./components/SurahView";
 export default function App() {
   const [selectedSurah, setSelectedSurah] = useState<number | null>(() => {
     if (typeof window !== "undefined") {
+      const pathParts = window.location.pathname.split('/').filter(Boolean);
+      if (pathParts.length > 0) {
+        const parsed = parseInt(pathParts[0], 10);
+        if (!isNaN(parsed) && parsed >= 1 && parsed <= 114) {
+          return parsed;
+        }
+      }
+
+      // Fallback for old query param format
       const params = new URLSearchParams(window.location.search);
       const surahParam = params.get("surah");
       if (surahParam) {
@@ -31,37 +40,43 @@ export default function App() {
 
   useEffect(() => {
     if (typeof window !== "undefined") {
-      const url = new URL(window.location.href);
-      const currentSurah = url.searchParams.get("surah");
+      const pathParts = window.location.pathname.split('/').filter(Boolean);
+      const currentSurah = pathParts.length > 0 ? pathParts[0] : null;
       const newSurah = selectedSurah ? selectedSurah.toString() : null;
       
       if (currentSurah !== newSurah) {
         if (selectedSurah) {
-          url.searchParams.set("surah", selectedSurah.toString());
-          url.searchParams.delete("ayah");
+          window.history.pushState({}, "", `/${selectedSurah}`);
         } else {
-          url.searchParams.delete("surah");
-          url.searchParams.delete("ayah");
+          window.history.pushState({}, "", "/");
         }
-        window.history.pushState({}, "", url.toString());
       }
     }
   }, [selectedSurah]);
 
   useEffect(() => {
     const handlePopState = () => {
+      const pathParts = window.location.pathname.split('/').filter(Boolean);
+      if (pathParts.length > 0) {
+        const parsed = parseInt(pathParts[0], 10);
+        if (!isNaN(parsed) && parsed >= 1 && parsed <= 114) {
+          setSelectedSurah(parsed);
+          return;
+        }
+      }
+
+      // Fallback for old query param format
       const params = new URLSearchParams(window.location.search);
       const surahParam = params.get("surah");
       if (surahParam) {
         const parsed = parseInt(surahParam, 10);
         if (!isNaN(parsed) && parsed >= 1 && parsed <= 114) {
           setSelectedSurah(parsed);
-        } else {
-          setSelectedSurah(null);
+          return;
         }
-      } else {
-        setSelectedSurah(null);
       }
+      
+      setSelectedSurah(null);
     };
 
     window.addEventListener("popstate", handlePopState);
