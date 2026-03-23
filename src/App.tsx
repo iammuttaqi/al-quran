@@ -94,7 +94,7 @@ export default function App() {
 
   return (
     <div className="min-h-screen bg-background text-foreground transition-colors duration-300">
-      <header className="w-full border-b border-border/50 bg-background/70 backdrop-blur-xl sticky top-0 z-50">
+      <header className="w-full border-b border-border/50 bg-background/70 backdrop-blur-xl">
         <div className="container mx-auto px-4 h-14 flex items-center justify-between max-w-4xl">
           <div
             className="font-bold text-xl tracking-tight cursor-pointer text-primary"

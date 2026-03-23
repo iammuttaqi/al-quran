@@ -294,9 +294,9 @@ export function SurahView({ surahId, onBack, onNavigate }: SurahViewProps) {
   }
 
   return (
-    <div className="max-w-4xl mx-auto px-4 py-8 pb-24">
+    <div className="max-w-4xl mx-auto px-4 py-4 pb-16">
       {/* Header */}
-      <div className="sticky top-14 z-40 bg-background/70 backdrop-blur-xl border-b border-border/50 pb-4 mb-8 pt-4 flex flex-row items-center justify-between gap-3 -mx-4 px-4 sm:mx-0 sm:px-0">
+      <div className="sticky top-0 z-40 bg-background/70 backdrop-blur-xl border-b border-border/50 pb-3 mb-4 pt-3 flex flex-row items-center justify-between gap-3 -mx-4 px-4 sm:mx-0 sm:px-0">
         <button
           onClick={onBack}
           className="flex items-center text-muted-foreground hover:text-foreground transition-all active:scale-95 shrink-0"
@@ -357,7 +357,7 @@ export function SurahView({ surahId, onBack, onNavigate }: SurahViewProps) {
       </div>
 
       {/* Surah Title Card */}
-      <div className="bg-gradient-to-br from-primary/10 to-primary/5 border border-primary/20 rounded-2xl p-8 text-center mb-12 relative overflow-hidden">
+      <div className="bg-gradient-to-br from-primary/10 to-primary/5 border border-primary/20 rounded-2xl p-6 text-center mb-6 relative overflow-hidden">
         <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-transparent via-primary to-transparent opacity-50"></div>
         <h1 className="text-4xl md:text-5xl font-arabic text-primary mb-4 leading-tight">
           {arabicData.name}
@@ -373,13 +373,13 @@ export function SurahView({ surahId, onBack, onNavigate }: SurahViewProps) {
 
       {/* Bismillah (except for Surah 9) */}
       {surahId !== 9 && surahId !== 1 && translationLangs.includes('arabic_original') && (
-        <div className="text-center font-arabic text-xl md:text-2xl text-foreground mb-12 leading-loose">
+        <div className="text-center font-arabic text-xl md:text-2xl text-foreground mb-6 leading-loose">
           بِسْمِ ٱللَّهِ ٱلرَّحْمَٰنِ ٱلرَّحِيمِ
         </div>
       )}
 
       {/* Ayahs List */}
-      <div className="space-y-8">
+      <div className="space-y-4">
         {arabicData.ayahs.map((ayah, index) => {
           const audio = audioData?.ayahs[index];
           const isBookmarked = bookmarkedAyah === ayah.numberInSurah;
@@ -398,7 +398,7 @@ export function SurahView({ surahId, onBack, onNavigate }: SurahViewProps) {
             <div
               key={ayah.number}
               className={cn(
-                "p-6 rounded-2xl border transition-all duration-300 animate-in fade-in slide-in-from-bottom-4",
+                "p-4 rounded-xl border transition-all duration-300 animate-in fade-in slide-in-from-bottom-4",
                 isBookmarked
                   ? "border-primary bg-primary/5 shadow-sm"
                   : "border-border bg-card hover:border-primary/30",
@@ -406,7 +406,7 @@ export function SurahView({ surahId, onBack, onNavigate }: SurahViewProps) {
               style={{ animationDelay: `${Math.min(index * 50, 500)}ms`, animationFillMode: 'both' }}
               id={`ayah-${ayah.numberInSurah}`}
             >
-              <div className="flex justify-between items-start mb-6">
+              <div className="flex justify-between items-start mb-4">
                 <div className="flex items-center space-x-2">
                   <span className="flex items-center justify-center w-8 h-8 rounded-full bg-secondary text-secondary-foreground text-sm font-medium">
                     {ayah.numberInSurah}
@@ -466,10 +466,7 @@ export function SurahView({ surahId, onBack, onNavigate }: SurahViewProps) {
                     className="text-right font-arabic text-base leading-[2.5] text-foreground"
                     dir="rtl"
                   >
-                    {arabicText}{" "}
-                    <span className="inline-flex items-center justify-center w-8 h-8 rounded-full border-2 border-primary/30 text-primary text-sm ml-2">
-                      {ayah.numberInSurah}
-                    </span>
+                    {arabicText}
                   </div>
                 )}
 
