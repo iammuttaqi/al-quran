@@ -12,6 +12,7 @@ import {
   Sparkles,
   Loader2,
   X,
+  BookOpen,
 } from "lucide-react";
 import { SurahDetail, ApiResponse } from "../types";
 import { cn } from "../lib/utils";
@@ -80,8 +81,14 @@ export function SurahView({ surahId, onBack, onNavigate }: SurahViewProps) {
   const [tafsirLoading, setTafsirLoading] = useState<number | null>(null);
   const [tafsirData, setTafsirData] = useState<{ [ayahNumber: number]: string }>({});
   const [expandedTafsir, setExpandedTafsir] = useState<number | null>(null);
+  
+  const [literalLoading, setLiteralLoading] = useState<number | null>(null);
+  const [literalData, setLiteralData] = useState<{ [ayahNumber: number]: string }>({});
+  const [expandedLiteral, setExpandedLiteral] = useState<number | null>(null);
+  
   const [showCopyToast, setShowCopyToast] = useState(false);
   const [showTafsirCopyToast, setShowTafsirCopyToast] = useState(false);
+  const [showLiteralCopyToast, setShowLiteralCopyToast] = useState(false);
 
   const wakeLockRef = useRef<any>(null);
 
@@ -369,6 +376,58 @@ export function SurahView({ surahId, onBack, onNavigate }: SurahViewProps) {
     setTimeout(() => setShowTafsirCopyToast(false), 2000);
   };
 
+  const copyLiteral = (ayahNumber: number) => {
+    const literalText = literalData[ayahNumber];
+    if (!literalText) return;
+    
+    const textToCopy = `[${surahId}:${ayahNumber}] Surah ${arabicData?.englishName} - Literal Translation\n\n${literalText}`;
+    navigator.clipboard.writeText(textToCopy.trim());
+    setShowLiteralCopyToast(true);
+    setTimeout(() => setShowLiteralCopyToast(false), 2000);
+  };
+
+  const fetchLiteralTranslation = async (ayahNumber: number, englishText: string) => {
+    setExpandedLiteral(ayahNumber);
+    if (literalData[ayahNumber]) {
+      return;
+    }
+
+    setLiteralLoading(ayahNumber);
+
+    try {
+      const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY });
+
+      const targetLangs = translationLangs
+        .filter(id => id !== 'arabic_original' && id !== 'en.asad')
+        .map(id => getLanguageName(id));
+      
+      const langsString = targetLangs.length > 0 ? targetLangs.join(" and ") : "English";
+      const multiLangInstruction = targetLangs.length > 1 
+        ? `\n\nIMPORTANT: Since multiple languages are requested, provide the literal translation in EACH of the requested languages (${langsString}), separated by a horizontal rule (---) and clear headings (e.g., ### English, ### Bangla).` 
+        : "";
+
+      const prompt = `Provide a strict, word-for-word literal translation of Surah ${arabicData?.englishName}, Ayah ${ayahNumber}.
+      
+English Translation Reference: ${englishText}
+
+Focus strictly on the literal meaning of the words as they appear, without adding interpretive context or tafsir. Format using Markdown.
+
+Please provide the literal translation in the following language(s): ${langsString}.${multiLangInstruction}`;
+
+      const response = await ai.models.generateContent({
+        model: "gemini-3-flash-preview",
+        contents: prompt,
+      });
+
+      setLiteralData(prev => ({ ...prev, [ayahNumber]: response.text || "No translation available." }));
+    } catch (error) {
+      console.error("Error fetching Literal Translation:", error);
+      setLiteralData(prev => ({ ...prev, [ayahNumber]: "Failed to load translation. Please try again later." }));
+    } finally {
+      setLiteralLoading(null);
+    }
+  };
+
   const fetchTafsir = async (ayahNumber: number, arabicText: string) => {
     setExpandedTafsir(ayahNumber);
     if (tafsirData[ayahNumber]) {
@@ -614,6 +673,27 @@ Please provide the Tafsir in the following language(s): ${langsString}.${multiLa
                     <span className="text-xs font-medium hidden sm:inline-block">Tafsir</span>
                   </button>
 
+                  <button
+                    onClick={() => {
+                      const englishText = translationsData.length > 0 ? translationsData[0].ayahs[index].text : "";
+                      fetchLiteralTranslation(ayah.numberInSurah, englishText);
+                    }}
+                    className={cn(
+                      "p-2 rounded-full transition-all active:scale-95 flex items-center gap-1.5",
+                      expandedLiteral === ayah.numberInSurah
+                        ? "text-primary bg-primary/10"
+                        : "text-muted-foreground hover:bg-secondary hover:text-foreground",
+                    )}
+                    title="AI Literal Translation"
+                  >
+                    {literalLoading === ayah.numberInSurah ? (
+                      <Loader2 className="w-4 h-4 animate-spin" />
+                    ) : (
+                      <BookOpen className="w-4 h-4" />
+                    )}
+                    <span className="text-xs font-medium hidden sm:inline-block">Literal</span>
+                  </button>
+
                   {audio?.audio && (
                     <button
                       onClick={() =>
@@ -728,6 +808,13 @@ Please provide the Tafsir in the following language(s): ${langsString}.${multiLa
         </div>
       )}
 
+      {/* Literal Copy Toast */}
+      {showLiteralCopyToast && (
+        <div className="fixed bottom-4 left-1/2 -translate-x-1/2 bg-foreground text-background px-4 py-2 rounded-lg shadow-lg z-50 text-sm font-medium animate-in fade-in slide-in-from-bottom-4">
+          Literal translation copied to clipboard!
+        </div>
+      )}
+
       {/* Tafsir Modal */}
       {expandedTafsir !== null && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-background/80 backdrop-blur-sm animate-in fade-in duration-200">
@@ -771,6 +858,57 @@ Please provide the Tafsir in the following language(s): ${langsString}.${multiLa
                     }}
                   >
                     {tafsirData[expandedTafsir]}
+                  </Markdown>
+                </div>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Literal Translation Modal */}
+      {expandedLiteral !== null && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-background/80 backdrop-blur-sm animate-in fade-in duration-200">
+          <div className="bg-card text-card-foreground border border-border shadow-lg rounded-xl w-full max-w-2xl max-h-[80vh] flex flex-col animate-in zoom-in-95 duration-200">
+            <div className="flex items-center justify-between p-4 border-b border-border">
+              <div className="flex items-center gap-2 text-primary">
+                <BookOpen className="w-5 h-5" />
+                <h3 className="font-semibold">Literal Translation - Ayah {expandedLiteral}</h3>
+              </div>
+              <div className="flex items-center gap-1">
+                {!literalLoading && literalData[expandedLiteral] && (
+                  <button
+                    onClick={() => copyLiteral(expandedLiteral)}
+                    className="p-2 rounded-md hover:bg-secondary text-muted-foreground transition-colors"
+                    title="Copy Literal Translation"
+                  >
+                    <Copy className="w-4 h-4" />
+                  </button>
+                )}
+                <button
+                  onClick={() => setExpandedLiteral(null)}
+                  className="p-2 rounded-md hover:bg-secondary text-muted-foreground transition-colors"
+                >
+                  <X className="w-5 h-5" />
+                </button>
+              </div>
+            </div>
+            <div className="p-4 overflow-y-auto">
+              {literalLoading === expandedLiteral ? (
+                <div className="flex flex-col items-center justify-center py-8 text-muted-foreground gap-3">
+                  <Loader2 className="w-8 h-8 animate-spin text-primary" />
+                  <p>Generating literal translation...</p>
+                </div>
+              ) : (
+                <div className="text-sm text-muted-foreground leading-relaxed prose prose-sm sm:prose-base dark:prose-invert max-w-none">
+                  <Markdown
+                    components={{
+                      hr: ({node, ...props}) => <hr className="my-8 border-t-2 border-border/60" {...props} />,
+                      h3: ({node, ...props}) => <h3 className="text-lg font-semibold text-foreground mt-8 mb-4" {...props} />,
+                      h2: ({node, ...props}) => <h2 className="text-xl font-semibold text-foreground mt-8 mb-4" {...props} />,
+                    }}
+                  >
+                    {literalData[expandedLiteral]}
                   </Markdown>
                 </div>
               )}
