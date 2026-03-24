@@ -111,12 +111,16 @@ export default function App() {
     <div className="min-h-screen bg-background text-foreground transition-colors duration-300">
       <header className="w-full border-b border-border/50 bg-background/70 backdrop-blur-xl">
         <div className="container mx-auto px-4 h-14 flex items-center justify-between max-w-4xl">
-          <div
+          <a
+            href="/"
             className="font-bold text-xl tracking-tight cursor-pointer text-primary"
-            onClick={() => setSelectedSurah(null)}
+            onClick={(e) => {
+              e.preventDefault();
+              setSelectedSurah(null);
+            }}
           >
             Al Quran
-          </div>
+          </a>
           <button
             onClick={cycleTheme}
             className="p-2 rounded-full hover:bg-secondary transition-all active:scale-95"
