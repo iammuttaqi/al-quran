@@ -5,14 +5,20 @@ import { cn } from "../lib/utils";
 
 interface SurahListProps {
   onSelectSurah: (id: number) => void;
+  initialData?: any;
 }
 
-export function SurahList({ onSelectSurah }: SurahListProps) {
-  const [surahs, setSurahs] = useState<SurahMeta[]>([]);
-  const [loading, setLoading] = useState(true);
+export function SurahList({ onSelectSurah, initialData }: SurahListProps) {
+  const [surahs, setSurahs] = useState<SurahMeta[]>(() => {
+    return initialData?.surahs || [];
+  });
+  const [loading, setLoading] = useState(() => {
+    return !initialData?.surahs;
+  });
   const [searchQuery, setSearchQuery] = useState("");
 
   useEffect(() => {
+    if (surahs.length > 0) return;
     fetch("https://api.alquran.cloud/v1/surah")
       .then((res) => res.json())
       .then((data: ApiResponse<SurahMeta[]>) => {
@@ -23,7 +29,7 @@ export function SurahList({ onSelectSurah }: SurahListProps) {
         console.error("Failed to fetch surahs:", err);
         setLoading(false);
       });
-  }, []);
+  }, [surahs.length]);
 
   const filteredSurahs = surahs.filter(
     (surah) =>
@@ -86,31 +92,37 @@ export function SurahList({ onSelectSurah }: SurahListProps) {
 
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
         {filteredSurahs.map((surah, index) => (
-          <button
+          <a
             key={surah.number}
-            onClick={() => onSelectSurah(surah.number)}
-            className="flex items-center justify-between p-5 bg-card border border-border/60 rounded-2xl hover:border-primary/50 hover:shadow-sm transition-all active:scale-[0.98] text-left group animate-in fade-in slide-in-from-bottom-4"
+            href={`/${surah.number}`}
+            onClick={(e) => {
+              e.preventDefault();
+              onSelectSurah(surah.number);
+            }}
+            className="group relative flex flex-col p-4 bg-card border border-border/60 rounded-2xl hover:border-primary/50 hover:shadow-md transition-all duration-300 active:scale-[0.98] text-left animate-in fade-in slide-in-from-bottom-4 overflow-hidden"
             style={{ animationDelay: `${Math.min(index * 30, 500)}ms`, animationFillMode: 'both' }}
-          >
-            <div className="flex items-center gap-4">
-              <div className="relative flex items-center justify-center w-10 h-10 rounded-lg bg-secondary/50 text-secondary-foreground font-medium text-sm group-hover:bg-primary/10 group-hover:text-primary transition-colors">
+          > 
+            <div className="absolute inset-0 bg-gradient-to-br from-primary/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500 pointer-events-none" />
+            <div className="flex justify-between items-start mb-3 relative z-10">
+              <div className="flex items-center justify-center w-8 h-8 rounded-full bg-secondary/80 text-secondary-foreground font-medium text-xs group-hover:bg-primary/10 group-hover:text-primary transition-colors">
                 {surah.number}
               </div>
+              <div className="text-[10px] text-muted-foreground font-medium uppercase tracking-wider bg-secondary/40 px-2.5 py-1 rounded-full">
+                {surah.revelationType} • {surah.numberOfAyahs} Ayahs
+              </div>
+            </div>
+            
+            <div className="relative z-10 flex justify-between items-end mt-2">
               <div>
-                <h3 className="text-base font-semibold text-foreground group-hover:text-primary transition-colors">
+                <h3 className="text-lg font-semibold text-foreground group-hover:text-primary transition-colors">
                   {surah.englishName}
                 </h3>
-                <p className="text-[11px] text-muted-foreground mt-0.5 uppercase tracking-wider font-medium">
+                <p className="text-xs text-muted-foreground mt-1">
                   {surah.englishNameTranslation}
                 </p>
               </div>
             </div>
-            <div className="text-right flex items-center">
-              <p className="text-[11px] text-muted-foreground font-medium bg-secondary/50 px-2.5 py-1 rounded-md">
-                {surah.numberOfAyahs} Ayahs
-              </p>
-            </div>
-          </button>
+          </a>
         ))}
       </div>
 

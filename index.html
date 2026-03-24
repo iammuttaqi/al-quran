@@ -9,6 +9,18 @@
     <link rel="apple-touch-icon" href="/pwa-icon.svg" />
     <link rel="icon" type="image/svg+xml" href="/pwa-icon.svg" />
     <title>Al Quran</title>
+    <script>
+      (function() {
+        try {
+          var savedTheme = localStorage.getItem("app-theme");
+          if (savedTheme === 'dark' || savedTheme === 'sepia') {
+            document.documentElement.classList.add(savedTheme);
+          } else if (!savedTheme && window.matchMedia("(prefers-color-scheme: dark)").matches) {
+            document.documentElement.classList.add('dark');
+          }
+        } catch (e) {}
+      })();
+    </script>
   </head>
   <body>
     <div id="root"></div>

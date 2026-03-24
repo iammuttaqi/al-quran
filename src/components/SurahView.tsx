@@ -13,7 +13,10 @@ import {
   Loader2,
   X,
   BookOpen,
-  Languages
+  Languages,
+  MoreHorizontal,
+  Moon,
+  Sun
 } from "lucide-react";
 import { SurahDetail, ApiResponse } from "../types";
 import { cn } from "../lib/utils";
@@ -24,6 +27,9 @@ interface SurahViewProps {
   surahId: number;
   onBack: () => void;
   onNavigate: (id: number) => void;
+  theme: 'light' | 'dark' | 'sepia';
+  cycleTheme: () => void;
+  initialData?: any;
 }
 
 type TranslationLanguage = "en.sahih" | "pt.elhayek" | "bn.bengali";
@@ -46,27 +52,52 @@ const getLanguageName = (identifier: string): string => {
   }
 };
 
-export function SurahView({ surahId, onBack, onNavigate }: SurahViewProps) {
-  const [arabicData, setArabicData] = useState<SurahDetail | null>(null);
-  const [translationsData, setTranslationsData] = useState<SurahDetail[]>([]);
-  const [audioData, setAudioData] = useState<SurahDetail | null>(null);
-  const [loading, setLoading] = useState(true);
-  const [translationLangs, setTranslationLangs] = useState<string[]>(() => {
+export function SurahView({ surahId, onBack, onNavigate, theme, cycleTheme, initialData }: SurahViewProps) {
+  const [arabicData, setArabicData] = useState<SurahDetail | null>(() => {
+    if (initialData?.surahDetail && initialData.surahDetail[0].number === surahId) {
+      return initialData.surahDetail[0];
+    }
+    return null;
+  });
+  const [translationsData, setTranslationsData] = useState<SurahDetail[]>(() => {
+    if (initialData?.surahDetail && initialData.surahDetail[0].number === surahId) {
+      const audioIndex = initialData.surahDetail.length - 1;
+      return initialData.surahDetail.slice(1, audioIndex);
+    }
+    return [];
+  });
+  const [audioData, setAudioData] = useState<SurahDetail | null>(() => {
+    if (initialData?.surahDetail && initialData.surahDetail[0].number === surahId) {
+      const audioIndex = initialData.surahDetail.length - 1;
+      return initialData.surahDetail[audioIndex];
+    }
+    return null;
+  });
+  const [loading, setLoading] = useState(() => {
+    if (initialData?.surahDetail && initialData.surahDetail[0].number === surahId) {
+      return false;
+    }
+    return true;
+  });
+  const [translationLangs, setTranslationLangs] = useState<string[]>(ALL_LANGS);
+  const [isMounted, setIsMounted] = useState(false);
+
+  useEffect(() => {
+    setIsMounted(true);
     if (typeof window !== "undefined") {
       const savedLangs = localStorage.getItem("selected-langs");
       if (savedLangs) {
         try {
           const parsed = JSON.parse(savedLangs);
           if (Array.isArray(parsed) && parsed.length > 0) {
-            return parsed.filter(lang => ALL_LANGS.includes(lang));
+            setTranslationLangs(parsed.filter(lang => ALL_LANGS.includes(lang)));
           }
         } catch (e) {
           console.error("Failed to parse saved languages", e);
         }
       }
     }
-    return ALL_LANGS;
-  });
+  }, []);
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
   const [showShareToast, setShowShareToast] = useState(false);
@@ -83,13 +114,15 @@ export function SurahView({ surahId, onBack, onNavigate }: SurahViewProps) {
   const [tafsirData, setTafsirData] = useState<{ [ayahNumber: number]: string }>({});
   const [expandedTafsir, setExpandedTafsir] = useState<number | null>(null);
   
-  const [literalLoading, setLiteralLoading] = useState<number | null>(null);
-  const [literalData, setLiteralData] = useState<{ [ayahNumber: number]: string }>({});
-  const [expandedLiteral, setExpandedLiteral] = useState<number | null>(null);
+  const [meaningfulLoading, setMeaningfulLoading] = useState<number | null>(null);
+  const [meaningfulData, setMeaningfulData] = useState<{ [ayahNumber: number]: string }>({});
+  const [expandedMeaningful, setExpandedMeaningful] = useState<number | null>(null);
   
   const [showCopyToast, setShowCopyToast] = useState(false);
   const [showTafsirCopyToast, setShowTafsirCopyToast] = useState(false);
-  const [showLiteralCopyToast, setShowLiteralCopyToast] = useState(false);
+  const [showMeaningfulCopyToast, setShowMeaningfulCopyToast] = useState(false);
+
+  const [openDropdownAyah, setOpenDropdownAyah] = useState<number | null>(null);
 
   const wakeLockRef = useRef<any>(null);
 
@@ -125,6 +158,21 @@ export function SurahView({ surahId, onBack, onNavigate }: SurahViewProps) {
   }, [playingAyah]);
 
   useEffect(() => {
+    // Skip fetch if we already have the data from initialData and it matches the requested languages
+    if (arabicData && arabicData.number === surahId) {
+      const apiLangs = translationLangs.filter(id => id !== 'arabic_original');
+      const currentLangs = translationsData.map(t => t.edition.identifier);
+      
+      // Check if currentLangs has all the requested apiLangs
+      const hasAllLangs = apiLangs.every(lang => currentLangs.includes(lang));
+      if (hasAllLangs) {
+        // We have the data, just ensure we only show the requested ones
+        // (The rendering logic will filter them based on translationLangs)
+        setLoading(false);
+        return;
+      }
+    }
+
     setLoading(true);
     // Fetch Arabic, Translations, and Audio
     const apiLangs = translationLangs.filter(id => id !== 'arabic_original');
@@ -245,21 +293,25 @@ export function SurahView({ surahId, onBack, onNavigate }: SurahViewProps) {
     }
   }, [playingAyah]);
 
-  // Handle click outside dropdown
+  // Handle click outside dropdowns
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
       if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
         setIsDropdownOpen(false);
       }
+      
+      // Close ayah dropdown if clicked outside
+      const target = event.target as HTMLElement;
+      if (!target.closest('.ayah-dropdown-container')) {
+        setOpenDropdownAyah(null);
+      }
     };
 
-    if (isDropdownOpen) {
-      document.addEventListener("mousedown", handleClickOutside);
-    }
+    document.addEventListener("mousedown", handleClickOutside);
     return () => {
       document.removeEventListener("mousedown", handleClickOutside);
     };
-  }, [isDropdownOpen]);
+  }, []);
 
   // Scroll to top or specific ayah on load
   useEffect(() => {
@@ -377,55 +429,54 @@ export function SurahView({ surahId, onBack, onNavigate }: SurahViewProps) {
     setTimeout(() => setShowTafsirCopyToast(false), 2000);
   };
 
-  const copyLiteral = (ayahNumber: number) => {
-    const literalText = literalData[ayahNumber];
-    if (!literalText) return;
+  const copyMeaningful = (ayahNumber: number) => {
+    const meaningfulText = meaningfulData[ayahNumber];
+    if (!meaningfulText) return;
     
-    const textToCopy = `[${surahId}:${ayahNumber}] Surah ${arabicData?.englishName} - Literal Translation\n\n${literalText}`;
+    const textToCopy = `[${surahId}:${ayahNumber}] Surah ${arabicData?.englishName} - AI Translation\n\n${meaningfulText}`;
     navigator.clipboard.writeText(textToCopy.trim());
-    setShowLiteralCopyToast(true);
-    setTimeout(() => setShowLiteralCopyToast(false), 2000);
+    setShowMeaningfulCopyToast(true);
+    setTimeout(() => setShowMeaningfulCopyToast(false), 2000);
   };
 
-  const fetchLiteralTranslation = async (ayahNumber: number, englishText: string) => {
-    setExpandedLiteral(ayahNumber);
-    if (literalData[ayahNumber]) {
+  const fetchMeaningfulTranslation = async (ayahNumber: number, englishText: string) => {
+    setExpandedMeaningful(ayahNumber);
+    if (meaningfulData[ayahNumber]) {
       return;
     }
 
-    setLiteralLoading(ayahNumber);
+    setMeaningfulLoading(ayahNumber);
 
     try {
       const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY });
 
       const targetLangs = translationLangs
-        .filter(id => id !== 'arabic_original' && id !== 'en.asad')
+        .filter(id => id !== 'arabic_original' && id !== 'en.sahih')
         .map(id => getLanguageName(id));
       
       const langsString = targetLangs.length > 0 ? targetLangs.join(" and ") : "English";
       const multiLangInstruction = targetLangs.length > 1 
-        ? `\n\nIMPORTANT: Since multiple languages are requested, provide the literal translation in EACH of the requested languages (${langsString}), separated by a horizontal rule (---) and clear headings (e.g., ### English, ### Bangla).` 
+        ? `\n\nIMPORTANT: Since multiple languages are requested, provide the translation in EACH of the requested languages (${langsString}), separated by a horizontal rule (---) and clear headings (e.g., ### English, ### Bangla).` 
         : "";
 
-      const prompt = `Provide a strict, word-for-word literal translation of Surah ${arabicData?.englishName}, Ayah ${ayahNumber}.
+      const prompt = `Provide a meaningful and natural translation of the following Quranic verse.
       
-English Translation Reference: ${englishText}
+English Verse: ${englishText}
 
-Focus strictly on the literal meaning of the words as they appear, without adding interpretive context or tafsir. Format using Markdown.
-
-Please provide the literal translation in the following language(s): ${langsString}.${multiLangInstruction}`;
+Please translate this English verse into the following language(s): ${langsString}.${multiLangInstruction}
+Make the translation meaningful and natural in the target language, avoiding strict word-for-word literal translation if it sounds unnatural. Format using Markdown.`;
 
       const response = await ai.models.generateContent({
         model: "gemini-3-flash-preview",
         contents: prompt,
       });
 
-      setLiteralData(prev => ({ ...prev, [ayahNumber]: response.text || "No translation available." }));
+      setMeaningfulData(prev => ({ ...prev, [ayahNumber]: response.text || "No translation available." }));
     } catch (error) {
-      console.error("Error fetching Literal Translation:", error);
-      setLiteralData(prev => ({ ...prev, [ayahNumber]: "Failed to load translation. Please try again later." }));
+      console.error("Error fetching Translation:", error);
+      setMeaningfulData(prev => ({ ...prev, [ayahNumber]: "Failed to load translation. Please try again later." }));
     } finally {
-      setLiteralLoading(null);
+      setMeaningfulLoading(null);
     }
   };
 
@@ -507,7 +558,7 @@ Please provide the Tafsir in the following language(s): ${langsString}.${multiLa
   return (
     <div className="max-w-4xl mx-auto px-4 py-4 pb-16">
       {/* Header */}
-      <div className="sticky top-0 z-40 bg-background/70 backdrop-blur-xl border-b border-border/50 pb-3 mb-4 pt-3 flex flex-row items-center justify-between gap-3 -mx-4 px-4 sm:mx-0 sm:px-0">
+      <div className="sticky top-0 z-40 bg-background/80 backdrop-blur-xl border-b border-border/50 pb-3 mb-4 pt-3 flex flex-row items-center justify-between gap-3 -mx-4 px-4 sm:mx-0 sm:px-2">
         <button
           onClick={onBack}
           className="flex items-center text-muted-foreground hover:text-foreground transition-all active:scale-95 shrink-0"
@@ -519,11 +570,13 @@ Please provide the Tafsir in the following language(s): ${langsString}.${multiLa
 
         <div className="flex items-center gap-2 w-full sm:w-auto">
           <button
-            onClick={handleShare}
+            onClick={cycleTheme}
             className="flex items-center justify-center p-2 rounded-lg bg-secondary text-foreground hover:bg-secondary/80 transition-all active:scale-95"
-            title="Share Surah"
+            title={`Current theme: ${theme}`}
           >
-            <Share2 className="w-5 h-5" />
+            {theme === 'light' && <Sun className="w-5 h-5" />}
+            {theme === 'dark' && <Moon className="w-5 h-5" />}
+            {theme === 'sepia' && <BookOpen className="w-5 h-5" />}
           </button>
 
           <div className="relative w-full sm:w-auto" ref={dropdownRef}>
@@ -618,43 +671,31 @@ Please provide the Tafsir in the following language(s): ${langsString}.${multiLa
               id={`ayah-${ayah.numberInSurah}`}
             >
               <div className="flex justify-between items-start mb-4">
-                <div className="flex items-center space-x-2">
-                  <span className="flex items-center justify-center w-8 h-8 rounded-full bg-secondary text-secondary-foreground text-sm font-medium">
+                <div className="flex items-center space-x-1 sm:space-x-2">
+                  <span className="flex items-center justify-center w-8 h-8 rounded-full bg-secondary text-secondary-foreground text-sm font-medium mr-1 sm:mr-0">
                     {ayah.numberInSurah}
                   </span>
 
-                  <button
-                    onClick={() => toggleBookmark(ayah.numberInSurah)}
-                    className={cn(
-                      "p-2 rounded-full transition-all active:scale-95",
-                      isBookmarked
-                        ? "text-primary bg-primary/10"
-                        : "text-muted-foreground hover:bg-secondary hover:text-foreground",
-                    )}
-                    title={
-                      isBookmarked ? "Remove bookmark" : "Bookmark this ayah"
-                    }
-                  >
-                    <Bookmark
-                      className={cn("w-4 h-4", isBookmarked && "fill-current")}
-                    />
-                  </button>
-
-                  <button
-                    onClick={() => shareAyah(ayah.numberInSurah)}
-                    className="p-2 rounded-full text-muted-foreground hover:bg-secondary hover:text-foreground transition-all active:scale-95"
-                    title="Share this ayah"
-                  >
-                    <Share2 className="w-4 h-4" />
-                  </button>
-
-                  <button
-                    onClick={() => copyAyah(ayah.numberInSurah, arabicText)}
-                    className="p-2 rounded-full text-muted-foreground hover:bg-secondary hover:text-foreground transition-all active:scale-95"
-                    title="Copy this ayah"
-                  >
-                    <Copy className="w-4 h-4" />
-                  </button>
+                  {audio?.audio && (
+                    <button
+                      onClick={() =>
+                        playAudio(ayah.numberInSurah, audio.audio!)
+                      }
+                      className={cn(
+                        "p-2 rounded-full transition-all active:scale-95",
+                        isPlaying
+                          ? "text-primary bg-primary/10"
+                          : "text-muted-foreground hover:bg-secondary hover:text-foreground",
+                      )}
+                      title={isPlaying ? "Pause audio" : "Play audio"}
+                    >
+                      {isPlaying ? (
+                        <Pause className="w-4 h-4" />
+                      ) : (
+                        <Play className="w-4 h-4 ml-0.5" />
+                      )}
+                    </button>
+                  )}
 
                   <button
                     onClick={() => fetchTafsir(ayah.numberInSurah, arabicText)}
@@ -677,44 +718,61 @@ Please provide the Tafsir in the following language(s): ${langsString}.${multiLa
                   <button
                     onClick={() => {
                       const englishText = translationsData.length > 0 ? translationsData[0].ayahs[index].text : "";
-                      fetchLiteralTranslation(ayah.numberInSurah, englishText);
+                      fetchMeaningfulTranslation(ayah.numberInSurah, englishText);
                     }}
                     className={cn(
                       "p-2 rounded-full transition-all active:scale-95 flex items-center gap-1.5",
-                      expandedLiteral === ayah.numberInSurah
+                      expandedMeaningful === ayah.numberInSurah
                         ? "text-primary bg-primary/10"
                         : "text-muted-foreground hover:bg-secondary hover:text-foreground",
                     )}
-                    title="AI Literal Translation"
+                    title="AI Meaningful Translation"
                   >
-                    {literalLoading === ayah.numberInSurah ? (
+                    {meaningfulLoading === ayah.numberInSurah ? (
                       <Loader2 className="w-4 h-4 animate-spin" />
                     ) : (
                       <Languages className="w-4 h-4" />
                     )}
-                    <span className="text-xs font-medium hidden sm:inline-block">Literal</span>
+                    <span className="text-xs font-medium hidden sm:inline-block">Translate</span>
                   </button>
 
-                  {audio?.audio && (
+                  <div className="relative ayah-dropdown-container">
                     <button
-                      onClick={() =>
-                        playAudio(ayah.numberInSurah, audio.audio!)
-                      }
-                      className={cn(
-                        "p-2 rounded-full transition-all active:scale-95",
-                        isPlaying
-                          ? "text-primary bg-primary/10"
-                          : "text-muted-foreground hover:bg-secondary hover:text-foreground",
-                      )}
-                      title={isPlaying ? "Pause audio" : "Play audio"}
+                      onClick={() => setOpenDropdownAyah(openDropdownAyah === ayah.numberInSurah ? null : ayah.numberInSurah)}
+                      className="p-2 rounded-full text-muted-foreground hover:bg-secondary hover:text-foreground transition-all active:scale-95"
+                      title="More options"
                     >
-                      {isPlaying ? (
-                        <Pause className="w-4 h-4" />
-                      ) : (
-                        <Play className="w-4 h-4 ml-0.5" />
-                      )}
+                      <MoreHorizontal className="w-4 h-4" />
                     </button>
-                  )}
+                    
+                    {openDropdownAyah === ayah.numberInSurah && (
+                      <div className="absolute right-0 mt-2 w-40 bg-card border border-border rounded-lg shadow-lg z-20 py-1 overflow-hidden">
+                        <button 
+                          onClick={() => { toggleBookmark(ayah.numberInSurah); setOpenDropdownAyah(null); }} 
+                          className="flex items-center w-full px-4 py-2.5 text-sm text-left hover:bg-secondary transition-colors"
+                        >
+                          <Bookmark className={cn("w-4 h-4 mr-3", isBookmarked && "fill-current text-primary")} />
+                          <span className={isBookmarked ? "text-primary font-medium" : "text-foreground"}>
+                            {isBookmarked ? "Remove Bookmark" : "Bookmark"}
+                          </span>
+                        </button>
+                        <button 
+                          onClick={() => { shareAyah(ayah.numberInSurah); setOpenDropdownAyah(null); }} 
+                          className="flex items-center w-full px-4 py-2.5 text-sm text-left hover:bg-secondary transition-colors text-foreground"
+                        >
+                          <Share2 className="w-4 h-4 mr-3" />
+                          <span>Share</span>
+                        </button>
+                        <button 
+                          onClick={() => { copyAyah(ayah.numberInSurah, arabicText); setOpenDropdownAyah(null); }} 
+                          className="flex items-center w-full px-4 py-2.5 text-sm text-left hover:bg-secondary transition-colors text-foreground"
+                        >
+                          <Copy className="w-4 h-4 mr-3" />
+                          <span>Copy</span>
+                        </button>
+                      </div>
+                    )}
+                  </div>
                 </div>
               </div>
 
@@ -728,9 +786,9 @@ Please provide the Tafsir in the following language(s): ${langsString}.${multiLa
                   </div>
                 )}
 
-                {translationsData.length > 0 && (
+                {translationsData.filter(t => translationLangs.includes(t.edition.identifier)).length > 0 && (
                   <div className={cn("flex flex-col space-y-4 border-border/50", translationLangs.includes('arabic_original') && "mt-4 pt-4 border-t")}>
-                    {translationsData.map((transData) => (
+                    {translationsData.filter(t => translationLangs.includes(t.edition.identifier)).map((transData) => (
                       <div
                         key={transData.edition.identifier}
                         className={cn(
@@ -809,10 +867,10 @@ Please provide the Tafsir in the following language(s): ${langsString}.${multiLa
         </div>
       )}
 
-      {/* Literal Copy Toast */}
-      {showLiteralCopyToast && (
+      {/* Meaningful Copy Toast */}
+      {showMeaningfulCopyToast && (
         <div className="fixed bottom-4 left-1/2 -translate-x-1/2 bg-foreground text-background px-4 py-2 rounded-lg shadow-lg z-50 text-sm font-medium animate-in fade-in slide-in-from-bottom-4">
-          Literal translation copied to clipboard!
+          Translation copied to clipboard!
         </div>
       )}
 
@@ -867,27 +925,27 @@ Please provide the Tafsir in the following language(s): ${langsString}.${multiLa
         </div>
       )}
 
-      {/* Literal Translation Modal */}
-      {expandedLiteral !== null && (
+      {/* Meaningful Translation Modal */}
+      {expandedMeaningful !== null && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-background/80 backdrop-blur-sm animate-in fade-in duration-200">
           <div className="bg-card text-card-foreground border border-border shadow-lg rounded-xl w-full max-w-2xl max-h-[80vh] flex flex-col animate-in zoom-in-95 duration-200">
             <div className="flex items-center justify-between p-4 border-b border-border">
               <div className="flex items-center gap-2 text-primary">
                 <Languages className="w-5 h-5" />
-                <h3 className="font-semibold">Literal Translation - Ayah {expandedLiteral}</h3>
+                <h3 className="font-semibold">AI Translation - Ayah {expandedMeaningful}</h3>
               </div>
               <div className="flex items-center gap-1">
-                {!literalLoading && literalData[expandedLiteral] && (
+                {!meaningfulLoading && meaningfulData[expandedMeaningful] && (
                   <button
-                    onClick={() => copyLiteral(expandedLiteral)}
+                    onClick={() => copyMeaningful(expandedMeaningful)}
                     className="p-2 rounded-md hover:bg-secondary text-muted-foreground transition-colors"
-                    title="Copy Literal Translation"
+                    title="Copy Translation"
                   >
                     <Copy className="w-4 h-4" />
                   </button>
                 )}
                 <button
-                  onClick={() => setExpandedLiteral(null)}
+                  onClick={() => setExpandedMeaningful(null)}
                   className="p-2 rounded-md hover:bg-secondary text-muted-foreground transition-colors"
                 >
                   <X className="w-5 h-5" />
@@ -895,10 +953,10 @@ Please provide the Tafsir in the following language(s): ${langsString}.${multiLa
               </div>
             </div>
             <div className="p-4 overflow-y-auto">
-              {literalLoading === expandedLiteral ? (
+              {meaningfulLoading === expandedMeaningful ? (
                 <div className="flex flex-col items-center justify-center py-8 text-muted-foreground gap-3">
                   <Loader2 className="w-8 h-8 animate-spin text-primary" />
-                  <p>Generating literal translation...</p>
+                  <p>Generating translation...</p>
                 </div>
               ) : (
                 <div className="text-sm text-muted-foreground leading-relaxed prose prose-sm sm:prose-base dark:prose-invert max-w-none">
@@ -909,7 +967,7 @@ Please provide the Tafsir in the following language(s): ${langsString}.${multiLa
                       h2: ({node, ...props}) => <h2 className="text-xl font-semibold text-foreground mt-8 mb-4" {...props} />,
                     }}
                   >
-                    {literalData[expandedLiteral]}
+                    {meaningfulData[expandedMeaningful]}
                   </Markdown>
                 </div>
               )}
