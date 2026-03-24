@@ -86,13 +86,9 @@ export function SurahList({ onSelectSurah }: SurahListProps) {
 
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
         {filteredSurahs.map((surah, index) => (
-          <a
+          <button
             key={surah.number}
-            href={`/${surah.number}`}
-            onClick={(e) => {
-              e.preventDefault();
-              onSelectSurah(surah.number);
-            }}
+            onClick={() => onSelectSurah(surah.number)}
             className="flex items-center justify-between p-5 bg-card border border-border/60 rounded-2xl hover:border-primary/50 hover:shadow-sm transition-all active:scale-[0.98] text-left group animate-in fade-in slide-in-from-bottom-4"
             style={{ animationDelay: `${Math.min(index * 30, 500)}ms`, animationFillMode: 'both' }}
           >
@@ -114,7 +110,7 @@ export function SurahList({ onSelectSurah }: SurahListProps) {
                 {surah.numberOfAyahs} Ayahs
               </p>
             </div>
-          </a>
+          </button>
         ))}
       </div>
 
