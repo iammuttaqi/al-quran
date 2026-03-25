@@ -12,7 +12,7 @@ export default defineConfig(({mode}) => {
       tailwindcss(),
       VitePWA({
         registerType: 'autoUpdate',
-        includeAssets: ['pwa-icon.svg', 'og-image.jpg'],
+        includeAssets: ['pwa-icon.svg'],
         manifest: {
           name: 'Al Quran Digital',
           short_name: 'Al Quran',
