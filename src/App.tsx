@@ -4,33 +4,23 @@ import { SurahList } from "./components/SurahList";
 import { SurahView } from "./components/SurahView";
 import { BackgroundElements } from "./components/BackgroundElements";
 
-export default function App({ initialData, initialUrl }: { initialData?: any, initialUrl?: string }) {
+export default function App() {
   const [selectedSurah, setSelectedSurah] = useState<number | null>(() => {
-    if (typeof window !== "undefined") {
-      const pathParts = window.location.pathname.split('/').filter(Boolean);
-      if (pathParts.length > 0) {
-        const parsed = parseInt(pathParts[0], 10);
-        if (!isNaN(parsed) && parsed >= 1 && parsed <= 114) {
-          return parsed;
-        }
+    const pathParts = window.location.pathname.split('/').filter(Boolean);
+    if (pathParts.length > 0) {
+      const parsed = parseInt(pathParts[0], 10);
+      if (!isNaN(parsed) && parsed >= 1 && parsed <= 114) {
+        return parsed;
       }
+    }
 
-      // Fallback for old query param format
-      const params = new URLSearchParams(window.location.search);
-      const surahParam = params.get("surah");
-      if (surahParam) {
-        const parsed = parseInt(surahParam, 10);
-        if (!isNaN(parsed) && parsed >= 1 && parsed <= 114) {
-          return parsed;
-        }
-      }
-    } else if (initialUrl) {
-      const pathParts = initialUrl.split('/').filter(Boolean);
-      if (pathParts.length > 0) {
-        const parsed = parseInt(pathParts[0], 10);
-        if (!isNaN(parsed) && parsed >= 1 && parsed <= 114) {
-          return parsed;
-        }
+    // Fallback for old query param format
+    const params = new URLSearchParams(window.location.search);
+    const surahParam = params.get("surah");
+    if (surahParam) {
+      const parsed = parseInt(surahParam, 10);
+      if (!isNaN(parsed) && parsed >= 1 && parsed <= 114) {
+        return parsed;
       }
     }
     return null;
@@ -41,28 +31,24 @@ export default function App({ initialData, initialUrl }: { initialData?: any, in
 
   useEffect(() => {
     setIsMounted(true);
-    if (typeof window !== "undefined") {
-      const savedTheme = localStorage.getItem("app-theme");
-      if (savedTheme === 'light' || savedTheme === 'dark' || savedTheme === 'sepia') {
-        setTheme(savedTheme);
-      } else if (window.matchMedia("(prefers-color-scheme: dark)").matches) {
-        setTheme('dark');
-      }
+    const savedTheme = localStorage.getItem("app-theme");
+    if (savedTheme === 'light' || savedTheme === 'dark' || savedTheme === 'sepia') {
+      setTheme(savedTheme);
+    } else if (window.matchMedia("(prefers-color-scheme: dark)").matches) {
+      setTheme('dark');
     }
   }, []);
 
   useEffect(() => {
-    if (typeof window !== "undefined") {
-      const pathParts = window.location.pathname.split('/').filter(Boolean);
-      const currentSurah = pathParts.length > 0 ? pathParts[0] : null;
-      const newSurah = selectedSurah ? selectedSurah.toString() : null;
-      
-      if (currentSurah !== newSurah) {
-        if (selectedSurah) {
-          window.history.pushState({}, "", `/${selectedSurah}`);
-        } else {
-          window.history.pushState({}, "", "/");
-        }
+    const pathParts = window.location.pathname.split('/').filter(Boolean);
+    const currentSurah = pathParts.length > 0 ? pathParts[0] : null;
+    const newSurah = selectedSurah ? selectedSurah.toString() : null;
+    
+    if (currentSurah !== newSurah) {
+      if (selectedSurah) {
+        window.history.pushState({}, "", `/${selectedSurah}`);
+      } else {
+        window.history.pushState({}, "", "/");
       }
     }
   }, [selectedSurah]);
@@ -97,12 +83,10 @@ export default function App({ initialData, initialUrl }: { initialData?: any, in
   }, []);
 
   useEffect(() => {
-    if (typeof window !== "undefined") {
-      localStorage.setItem("app-theme", theme);
-      document.documentElement.classList.remove("light", "dark", "sepia");
-      if (theme !== 'light') {
-        document.documentElement.classList.add(theme);
-      }
+    localStorage.setItem("app-theme", theme);
+    document.documentElement.classList.remove("light", "dark", "sepia");
+    if (theme !== 'light') {
+      document.documentElement.classList.add(theme);
     }
   }, [theme]);
 
@@ -133,12 +117,10 @@ export default function App({ initialData, initialUrl }: { initialData?: any, in
               onNavigate={(id) => setSelectedSurah(id)}
               theme={theme}
               cycleTheme={cycleTheme}
-              initialData={initialData}
             />
           ) : (
             <SurahList 
               onSelectSurah={setSelectedSurah} 
-              initialData={initialData}
               theme={theme}
               cycleTheme={cycleTheme}
             />

@@ -28,7 +28,6 @@ interface SurahViewProps {
   onNavigate: (id: number) => void;
   theme: 'light' | 'dark' | 'sepia';
   cycleTheme: () => void;
-  initialData?: any;
 }
 
 type TranslationLanguage = "en.sahih" | "pt.elhayek" | "bn.bengali";
@@ -51,49 +50,25 @@ const getLanguageName = (identifier: string): string => {
   }
 };
 
-export function SurahView({ surahId, onBack, onNavigate, theme, cycleTheme, initialData }: SurahViewProps) {
-  const [arabicData, setArabicData] = useState<SurahDetail | null>(() => {
-    if (initialData?.surahDetail && initialData.surahDetail[0].number === surahId) {
-      return initialData.surahDetail[0];
-    }
-    return null;
-  });
-  const [translationsData, setTranslationsData] = useState<SurahDetail[]>(() => {
-    if (initialData?.surahDetail && initialData.surahDetail[0].number === surahId) {
-      const audioIndex = initialData.surahDetail.length - 1;
-      return initialData.surahDetail.slice(1, audioIndex);
-    }
-    return [];
-  });
-  const [audioData, setAudioData] = useState<SurahDetail | null>(() => {
-    if (initialData?.surahDetail && initialData.surahDetail[0].number === surahId) {
-      const audioIndex = initialData.surahDetail.length - 1;
-      return initialData.surahDetail[audioIndex];
-    }
-    return null;
-  });
-  const [loading, setLoading] = useState(() => {
-    if (initialData?.surahDetail && initialData.surahDetail[0].number === surahId) {
-      return false;
-    }
-    return true;
-  });
+export function SurahView({ surahId, onBack, onNavigate, theme, cycleTheme }: SurahViewProps) {
+  const [arabicData, setArabicData] = useState<SurahDetail | null>(null);
+  const [translationsData, setTranslationsData] = useState<SurahDetail[]>([]);
+  const [audioData, setAudioData] = useState<SurahDetail | null>(null);
+  const [loading, setLoading] = useState(true);
   const [translationLangs, setTranslationLangs] = useState<string[]>(ALL_LANGS);
   const [isMounted, setIsMounted] = useState(false);
 
   useEffect(() => {
     setIsMounted(true);
-    if (typeof window !== "undefined") {
-      const savedLangs = localStorage.getItem("selected-langs");
-      if (savedLangs) {
-        try {
-          const parsed = JSON.parse(savedLangs);
-          if (Array.isArray(parsed) && parsed.length > 0) {
-            setTranslationLangs(parsed.filter(lang => ALL_LANGS.includes(lang)));
-          }
-        } catch (e) {
-          console.error("Failed to parse saved languages", e);
+    const savedLangs = localStorage.getItem("selected-langs");
+    if (savedLangs) {
+      try {
+        const parsed = JSON.parse(savedLangs);
+        if (Array.isArray(parsed) && parsed.length > 0) {
+          setTranslationLangs(parsed.filter(lang => ALL_LANGS.includes(lang)));
         }
+      } catch (e) {
+        console.error("Failed to parse saved languages", e);
       }
     }
   }, []);
@@ -155,21 +130,6 @@ export function SurahView({ surahId, onBack, onNavigate, theme, cycleTheme, init
   }, [playingAyah]);
 
   useEffect(() => {
-    // Skip fetch if we already have the data from initialData and it matches the requested languages
-    if (arabicData && arabicData.number === surahId) {
-      const apiLangs = translationLangs.filter(id => id !== 'arabic_original');
-      const currentLangs = translationsData.map(t => t.edition.identifier);
-      
-      // Check if currentLangs has all the requested apiLangs
-      const hasAllLangs = apiLangs.every(lang => currentLangs.includes(lang));
-      if (hasAllLangs) {
-        // We have the data, just ensure we only show the requested ones
-        // (The rendering logic will filter them based on translationLangs)
-        setLoading(false);
-        return;
-      }
-    }
-
     setLoading(true);
     // Fetch Arabic, Translations, and Audio
     const apiLangs = translationLangs.filter(id => id !== 'arabic_original');
@@ -214,9 +174,7 @@ export function SurahView({ surahId, onBack, onNavigate, theme, cycleTheme, init
   }, [arabicData]);
 
   useEffect(() => {
-    if (typeof window !== "undefined") {
-      localStorage.setItem("selected-langs", JSON.stringify(translationLangs));
-    }
+    localStorage.setItem("selected-langs", JSON.stringify(translationLangs));
   }, [translationLangs]);
 
   const toggleLanguage = (langId: string) => {

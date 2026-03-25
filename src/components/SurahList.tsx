@@ -5,18 +5,13 @@ import { cn } from "../lib/utils";
 
 interface SurahListProps {
   onSelectSurah: (id: number) => void;
-  initialData?: any;
   theme: string;
   cycleTheme: () => void;
 }
 
-export function SurahList({ onSelectSurah, initialData, theme, cycleTheme }: SurahListProps) {
-  const [surahs, setSurahs] = useState<SurahMeta[]>(() => {
-    return initialData?.surahs || [];
-  });
-  const [loading, setLoading] = useState(() => {
-    return !initialData?.surahs;
-  });
+export function SurahList({ onSelectSurah, theme, cycleTheme }: SurahListProps) {
+  const [surahs, setSurahs] = useState<SurahMeta[]>([]);
+  const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState("");
 
   useEffect(() => {
