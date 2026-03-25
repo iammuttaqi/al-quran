@@ -125,33 +125,6 @@ export default function App({ initialData, initialUrl }: { initialData?: any, in
       <BackgroundElements />
 
       <div className="relative z-10">
-        <header className="w-full border-b border-border/50 bg-background/70 backdrop-blur-xl transition-colors duration-1000">
-          <div className="container mx-auto px-4 h-14 flex items-center justify-between max-w-4xl">
-            <a
-              href="/"
-              className="font-bold text-xl tracking-tight cursor-pointer text-primary transition-colors duration-1000"
-              onClick={(e) => {
-                e.preventDefault();
-                setSelectedSurah(null);
-              }}
-            >
-              Al Quran
-            </a>
-            {!selectedSurah && (
-              <button
-                onClick={cycleTheme}
-                className="p-2 rounded-full hover:bg-secondary transition-all duration-500 active:scale-95"
-                aria-label="Toggle theme"
-                title={`Current theme: ${theme}`}
-              >
-                {theme === 'light' && <Sun className="w-5 h-5" />}
-                {theme === 'dark' && <Moon className="w-5 h-5" />}
-                {theme === 'sepia' && <BookOpen className="w-5 h-5" />}
-              </button>
-            )}
-          </div>
-        </header>
-
         <main className="animate-in fade-in duration-700">
           {selectedSurah ? (
             <SurahView
@@ -163,7 +136,12 @@ export default function App({ initialData, initialUrl }: { initialData?: any, in
               initialData={initialData}
             />
           ) : (
-            <SurahList onSelectSurah={setSelectedSurah} initialData={initialData} />
+            <SurahList 
+              onSelectSurah={setSelectedSurah} 
+              initialData={initialData}
+              theme={theme}
+              cycleTheme={cycleTheme}
+            />
           )}
         </main>
       </div>

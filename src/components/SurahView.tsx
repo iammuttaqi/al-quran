@@ -14,7 +14,6 @@ import {
   X,
   BookOpen,
   Languages,
-  MoreHorizontal,
   Moon,
   Sun
 } from "lucide-react";
@@ -121,8 +120,6 @@ export function SurahView({ surahId, onBack, onNavigate, theme, cycleTheme, init
   const [showCopyToast, setShowCopyToast] = useState(false);
   const [showTafsirCopyToast, setShowTafsirCopyToast] = useState(false);
   const [showMeaningfulCopyToast, setShowMeaningfulCopyToast] = useState(false);
-
-  const [openDropdownAyah, setOpenDropdownAyah] = useState<number | null>(null);
 
   const wakeLockRef = useRef<any>(null);
 
@@ -298,12 +295,6 @@ export function SurahView({ surahId, onBack, onNavigate, theme, cycleTheme, init
     const handleClickOutside = (event: MouseEvent) => {
       if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
         setIsDropdownOpen(false);
-      }
-      
-      // Close ayah dropdown if clicked outside
-      const target = event.target as HTMLElement;
-      if (!target.closest('.ayah-dropdown-container')) {
-        setOpenDropdownAyah(null);
       }
     };
 
@@ -556,72 +547,75 @@ Please provide the Tafsir in the following language(s): ${langsString}.${multiLa
   }
 
   return (
-    <div className="max-w-4xl mx-auto px-4 py-4 pb-16">
+    <div className="pb-16">
       {/* Header */}
-      <div className="sticky top-0 z-40 bg-background/80 backdrop-blur-xl border-b border-border/50 pb-3 mb-4 pt-3 flex flex-row items-center justify-between gap-3 -mx-4 px-4 sm:mx-0 sm:px-2">
-        <button
-          onClick={onBack}
-          className="flex items-center text-muted-foreground hover:text-foreground transition-all active:scale-95 shrink-0"
-        >
-          <ArrowLeft className="w-5 h-5 mr-1 sm:mr-2" />
-          <span className="hidden sm:inline">Back to Surahs</span>
-          <span className="sm:hidden">Back</span>
-        </button>
-
-        <div className="flex items-center gap-2 w-full sm:w-auto">
+      <div className="sticky top-0 z-40 bg-background/80 backdrop-blur-xl border-b border-border/50">
+        <div className="max-w-4xl mx-auto px-4 pb-3 pt-3 flex flex-row items-center justify-between gap-3">
           <button
-            onClick={cycleTheme}
-            className="flex items-center justify-center p-2 rounded-lg bg-secondary text-foreground hover:bg-secondary/80 transition-all active:scale-95"
-            title={`Current theme: ${theme}`}
+            onClick={onBack}
+            className="flex items-center text-muted-foreground hover:text-foreground transition-all active:scale-95 shrink-0"
           >
-            {theme === 'light' && <Sun className="w-5 h-5" />}
-            {theme === 'dark' && <Moon className="w-5 h-5" />}
-            {theme === 'sepia' && <BookOpen className="w-5 h-5" />}
+            <ArrowLeft className="w-5 h-5 mr-1 sm:mr-2" />
+            <span className="hidden sm:inline">Back to Surahs</span>
+            <span className="sm:hidden">Back</span>
           </button>
 
-          <div className="relative w-full sm:w-auto" ref={dropdownRef}>
+          <div className="flex items-center gap-2 w-full sm:w-auto">
             <button
-              onClick={() => setIsDropdownOpen(!isDropdownOpen)}
-              className="flex items-center justify-between w-full sm:w-64 bg-secondary border border-border text-foreground py-2 pl-4 pr-3 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary text-sm transition-all active:scale-[0.98]"
+              onClick={cycleTheme}
+              className="flex items-center justify-center p-2 rounded-lg bg-secondary text-foreground hover:bg-secondary/80 transition-all active:scale-95"
+              title={`Current theme: ${theme}`}
             >
-            <span className="truncate">
-              {translationLangs.length === 0
-                ? "Select Translations"
-                : `${translationLangs.length} Translation${translationLangs.length > 1 ? 's' : ''} Selected`}
-            </span>
-            <ChevronDown className={cn("w-4 h-4 text-muted-foreground transition-transform", isDropdownOpen && "rotate-180")} />
-          </button>
+              {theme === 'light' && <Sun className="w-5 h-5" />}
+              {theme === 'dark' && <Moon className="w-5 h-5" />}
+              {theme === 'sepia' && <BookOpen className="w-5 h-5" />}
+            </button>
 
-          {isDropdownOpen && (
-            <div className="absolute right-0 mt-2 w-full sm:w-64 bg-card border border-border rounded-lg shadow-lg z-20 py-1 overflow-hidden">
-              {TRANSLATION_OPTIONS.map((opt) => {
-                const isActive = translationLangs.includes(opt.id);
-                return (
-                  <button
-                    key={opt.id}
-                    onClick={() => toggleLanguage(opt.id)}
-                    className="flex items-center w-full px-4 py-2.5 text-sm text-left hover:bg-secondary transition-colors"
-                  >
-                    <div className={cn(
-                      "flex items-center justify-center w-4 h-4 mr-3 rounded border",
-                      isActive ? "bg-primary border-primary text-primary-foreground" : "border-muted-foreground"
-                    )}>
-                      {isActive && <Check className="w-3 h-3" />}
-                    </div>
-                    <span className={isActive ? "text-foreground font-medium" : "text-muted-foreground"}>
-                      {opt.name}
-                    </span>
-                  </button>
-                );
-              })}
+            <div className="relative w-full sm:w-auto" ref={dropdownRef}>
+              <button
+                onClick={() => setIsDropdownOpen(!isDropdownOpen)}
+                className="flex items-center justify-between w-full sm:w-64 bg-secondary border border-border text-foreground py-2 pl-4 pr-3 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary text-sm transition-all active:scale-[0.98]"
+              >
+              <span className="truncate">
+                {translationLangs.length === 0
+                  ? "Select Translations"
+                  : `${translationLangs.length} Translation${translationLangs.length > 1 ? 's' : ''} Selected`}
+              </span>
+              <ChevronDown className={cn("w-4 h-4 text-muted-foreground transition-transform", isDropdownOpen && "rotate-180")} />
+            </button>
+
+            {isDropdownOpen && (
+              <div className="absolute right-0 mt-2 w-full sm:w-64 bg-card border border-border rounded-lg shadow-lg z-20 py-1 overflow-hidden">
+                {TRANSLATION_OPTIONS.map((opt) => {
+                  const isActive = translationLangs.includes(opt.id);
+                  return (
+                    <button
+                      key={opt.id}
+                      onClick={() => toggleLanguage(opt.id)}
+                      className="flex items-center w-full px-4 py-2.5 text-sm text-left hover:bg-secondary transition-colors"
+                    >
+                      <div className={cn(
+                        "flex items-center justify-center w-4 h-4 mr-3 rounded border",
+                        isActive ? "bg-primary border-primary text-primary-foreground" : "border-muted-foreground"
+                      )}>
+                        {isActive && <Check className="w-3 h-3" />}
+                      </div>
+                      <span className={isActive ? "text-foreground font-medium" : "text-muted-foreground"}>
+                        {opt.name}
+                      </span>
+                    </button>
+                  );
+                })}
+              </div>
+            )}
             </div>
-          )}
           </div>
         </div>
       </div>
 
-      {/* Surah Title Card */}
-      <div className="bg-gradient-to-br from-primary/10 to-primary/5 border border-primary/20 rounded-2xl p-6 text-center mb-6 relative overflow-hidden">
+      <div className="max-w-4xl mx-auto px-4 py-4 pt-4">
+        {/* Surah Title Card */}
+        <div className="bg-gradient-to-br from-primary/10 to-primary/5 border border-primary/20 rounded-2xl p-6 text-center mb-6 relative overflow-hidden">
         <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-transparent via-primary to-transparent opacity-50"></div>
         <h1 className="text-4xl md:text-5xl font-arabic text-primary mb-4 leading-tight">
           {arabicData.name}
@@ -671,8 +665,8 @@ Please provide the Tafsir in the following language(s): ${langsString}.${multiLa
               id={`ayah-${ayah.numberInSurah}`}
             >
               <div className="flex justify-between items-start mb-4">
-                <div className="flex items-center space-x-1 sm:space-x-2">
-                  <span className="flex items-center justify-center w-8 h-8 rounded-full bg-secondary text-secondary-foreground text-sm font-medium mr-1 sm:mr-0">
+                <div className="flex items-center w-full gap-2 flex-wrap">
+                  <span className="flex items-center justify-center shrink-0 w-8 h-8 rounded-full bg-secondary text-secondary-foreground text-sm font-medium">
                     {ayah.numberInSurah}
                   </span>
 
@@ -682,7 +676,7 @@ Please provide the Tafsir in the following language(s): ${langsString}.${multiLa
                         playAudio(ayah.numberInSurah, audio.audio!)
                       }
                       className={cn(
-                        "p-2 rounded-full transition-all active:scale-95",
+                        "p-2 rounded-full transition-all active:scale-95 shrink-0",
                         isPlaying
                           ? "text-primary bg-primary/10"
                           : "text-muted-foreground hover:bg-secondary hover:text-foreground",
@@ -700,7 +694,7 @@ Please provide the Tafsir in the following language(s): ${langsString}.${multiLa
                   <button
                     onClick={() => fetchTafsir(ayah.numberInSurah, arabicText)}
                     className={cn(
-                      "p-2 rounded-full transition-all active:scale-95 flex items-center gap-1.5",
+                      "p-2 rounded-full transition-all active:scale-95 flex items-center gap-1.5 shrink-0",
                       expandedTafsir === ayah.numberInSurah
                         ? "text-primary bg-primary/10"
                         : "text-muted-foreground hover:bg-secondary hover:text-foreground",
@@ -721,7 +715,7 @@ Please provide the Tafsir in the following language(s): ${langsString}.${multiLa
                       fetchMeaningfulTranslation(ayah.numberInSurah, englishText);
                     }}
                     className={cn(
-                      "p-2 rounded-full transition-all active:scale-95 flex items-center gap-1.5",
+                      "p-2 rounded-full transition-all active:scale-95 flex items-center gap-1.5 shrink-0",
                       expandedMeaningful === ayah.numberInSurah
                         ? "text-primary bg-primary/10"
                         : "text-muted-foreground hover:bg-secondary hover:text-foreground",
@@ -736,43 +730,34 @@ Please provide the Tafsir in the following language(s): ${langsString}.${multiLa
                     <span className="text-xs font-medium hidden sm:inline-block">Translate</span>
                   </button>
 
-                  <div className="relative ayah-dropdown-container">
-                    <button
-                      onClick={() => setOpenDropdownAyah(openDropdownAyah === ayah.numberInSurah ? null : ayah.numberInSurah)}
-                      className="p-2 rounded-full text-muted-foreground hover:bg-secondary hover:text-foreground transition-all active:scale-95"
-                      title="More options"
-                    >
-                      <MoreHorizontal className="w-4 h-4" />
-                    </button>
-                    
-                    {openDropdownAyah === ayah.numberInSurah && (
-                      <div className="absolute right-0 mt-2 w-40 bg-card border border-border rounded-lg shadow-lg z-20 py-1 overflow-hidden">
-                        <button 
-                          onClick={() => { toggleBookmark(ayah.numberInSurah); setOpenDropdownAyah(null); }} 
-                          className="flex items-center w-full px-4 py-2.5 text-sm text-left hover:bg-secondary transition-colors"
-                        >
-                          <Bookmark className={cn("w-4 h-4 mr-3", isBookmarked && "fill-current text-primary")} />
-                          <span className={isBookmarked ? "text-primary font-medium" : "text-foreground"}>
-                            {isBookmarked ? "Remove Bookmark" : "Bookmark"}
-                          </span>
-                        </button>
-                        <button 
-                          onClick={() => { shareAyah(ayah.numberInSurah); setOpenDropdownAyah(null); }} 
-                          className="flex items-center w-full px-4 py-2.5 text-sm text-left hover:bg-secondary transition-colors text-foreground"
-                        >
-                          <Share2 className="w-4 h-4 mr-3" />
-                          <span>Share</span>
-                        </button>
-                        <button 
-                          onClick={() => { copyAyah(ayah.numberInSurah, arabicText); setOpenDropdownAyah(null); }} 
-                          className="flex items-center w-full px-4 py-2.5 text-sm text-left hover:bg-secondary transition-colors text-foreground"
-                        >
-                          <Copy className="w-4 h-4 mr-3" />
-                          <span>Copy</span>
-                        </button>
-                      </div>
+                  <button
+                    onClick={() => copyAyah(ayah.numberInSurah, arabicText)}
+                    className="p-2 rounded-full text-muted-foreground hover:bg-secondary hover:text-foreground transition-all active:scale-95 shrink-0"
+                    title="Copy Ayah"
+                  >
+                    <Copy className="w-4 h-4" />
+                  </button>
+
+                  <button
+                    onClick={() => shareAyah(ayah.numberInSurah)}
+                    className="p-2 rounded-full text-muted-foreground hover:bg-secondary hover:text-foreground transition-all active:scale-95 shrink-0"
+                    title="Share Ayah"
+                  >
+                    <Share2 className="w-4 h-4" />
+                  </button>
+
+                  <button
+                    onClick={() => toggleBookmark(ayah.numberInSurah)}
+                    className={cn(
+                      "p-2 rounded-full transition-all active:scale-95 shrink-0",
+                      isBookmarked
+                        ? "text-primary bg-primary/10"
+                        : "text-muted-foreground hover:bg-secondary hover:text-foreground"
                     )}
-                  </div>
+                    title={isBookmarked ? "Remove Bookmark" : "Bookmark Ayah"}
+                  >
+                    <Bookmark className={cn("w-4 h-4", isBookmarked && "fill-current")} />
+                  </button>
                 </div>
               </div>
 
@@ -929,7 +914,7 @@ Please provide the Tafsir in the following language(s): ${langsString}.${multiLa
       {expandedMeaningful !== null && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-background/80 backdrop-blur-sm animate-in fade-in duration-200">
           <div className="bg-card text-card-foreground border border-border shadow-lg rounded-xl w-full max-w-2xl max-h-[80vh] flex flex-col animate-in zoom-in-95 duration-200">
-            <div className="flex items-center justify-between p-4 border-b border-border">
+            <div className="flex items-center p-4 border-b border-border">
               <div className="flex items-center gap-2 text-primary">
                 <Languages className="w-5 h-5" />
                 <h3 className="font-semibold">AI Translation - Ayah {expandedMeaningful}</h3>
@@ -975,6 +960,7 @@ Please provide the Tafsir in the following language(s): ${langsString}.${multiLa
           </div>
         </div>
       )}
+      </div>
     </div>
   );
 }

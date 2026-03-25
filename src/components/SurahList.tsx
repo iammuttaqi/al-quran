@@ -1,14 +1,16 @@
 import { useState, useEffect } from "react";
-import { Search, BookOpen } from "lucide-react";
+import { Search, BookOpen, Sun, Moon } from "lucide-react";
 import { SurahMeta, ApiResponse } from "../types";
 import { cn } from "../lib/utils";
 
 interface SurahListProps {
   onSelectSurah: (id: number) => void;
   initialData?: any;
+  theme: string;
+  cycleTheme: () => void;
 }
 
-export function SurahList({ onSelectSurah, initialData }: SurahListProps) {
+export function SurahList({ onSelectSurah, initialData, theme, cycleTheme }: SurahListProps) {
   const [surahs, setSurahs] = useState<SurahMeta[]>(() => {
     return initialData?.surahs || [];
   });
@@ -69,8 +71,21 @@ export function SurahList({ onSelectSurah, initialData }: SurahListProps) {
   }
 
   return (
-    <div className="max-w-4xl mx-auto px-4 py-8">
-      <div className="mb-8 text-center">
+    <div className="max-w-4xl mx-auto px-4 py-8 relative">
+      <div className="absolute top-4 right-4 sm:top-8 sm:right-4">
+        <button
+          onClick={cycleTheme}
+          className="p-2.5 rounded-full bg-card border border-border/60 hover:bg-secondary hover:border-primary/50 transition-all duration-500 active:scale-95 shadow-sm"
+          aria-label="Toggle theme"
+          title={`Current theme: ${theme}`}
+        >
+          {theme === 'light' && <Sun className="w-5 h-5 text-foreground" />}
+          {theme === 'dark' && <Moon className="w-5 h-5 text-foreground" />}
+          {theme === 'sepia' && <BookOpen className="w-5 h-5 text-foreground" />}
+        </button>
+      </div>
+
+      <div className="mb-8 text-center pt-8 sm:pt-4">
         <h1 className="text-4xl font-bold mb-4 text-foreground">Al Quran</h1>
         <p className="text-muted-foreground">
           Read, study, and learn The Noble Quran.
@@ -99,28 +114,38 @@ export function SurahList({ onSelectSurah, initialData }: SurahListProps) {
               e.preventDefault();
               onSelectSurah(surah.number);
             }}
-            className="group relative flex flex-col p-4 bg-card border border-border/60 rounded-2xl hover:border-primary/50 hover:shadow-md transition-all duration-300 active:scale-[0.98] text-left animate-in fade-in slide-in-from-bottom-4 overflow-hidden"
+            className="group relative flex items-center p-5 bg-card border border-border/60 rounded-2xl hover:border-primary/50 hover:shadow-md transition-all duration-300 active:scale-[0.98] text-left animate-in fade-in slide-in-from-bottom-4 overflow-hidden"
             style={{ animationDelay: `${Math.min(index * 30, 500)}ms`, animationFillMode: 'both' }}
           > 
             <div className="absolute inset-0 bg-gradient-to-br from-primary/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500 pointer-events-none" />
-            <div className="flex justify-between items-start mb-3 relative z-10">
-              <div className="flex items-center justify-center w-8 h-8 rounded-full bg-secondary/80 text-secondary-foreground font-medium text-xs group-hover:bg-primary/10 group-hover:text-primary transition-colors">
-                {surah.number}
-              </div>
-              <div className="text-[10px] text-muted-foreground font-medium uppercase tracking-wider bg-secondary/40 px-2.5 py-1 rounded-full">
-                {surah.revelationType} • {surah.numberOfAyahs} Ayahs
+            
+            <div className="flex items-center justify-center shrink-0 w-12 h-12 rounded-full bg-secondary/80 text-secondary-foreground font-semibold text-base group-hover:bg-primary/10 group-hover:text-primary transition-colors mr-4 relative z-10">
+              {surah.number}
+            </div>
+
+            <div className="flex-1 min-w-0 relative z-10 pr-2">
+              <h3 className="text-lg font-bold text-foreground group-hover:text-primary transition-colors truncate">
+                {surah.englishName}
+              </h3>
+              <div className="flex items-center text-xs text-muted-foreground mt-1 space-x-1.5">
+                <span className="truncate">{surah.englishNameTranslation}</span>
+                <span className="shrink-0 opacity-50">•</span>
+                <span className="shrink-0">{surah.numberOfAyahs} Ayahs</span>
               </div>
             </div>
+
+            <div className="shrink-0 relative z-10 text-muted-foreground/50 group-hover:text-primary transition-all duration-300 transform group-hover:translate-x-1">
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <path d="M5 12h14M12 5l7 7-7 7"/>
+              </svg>
+            </div>
             
-            <div className="relative z-10 flex justify-between items-end mt-2">
-              <div>
-                <h3 className="text-lg font-semibold text-foreground group-hover:text-primary transition-colors">
-                  {surah.englishName}
-                </h3>
-                <p className="text-xs text-muted-foreground mt-1">
-                  {surah.englishNameTranslation}
-                </p>
-              </div>
+            {/* Decorative background element on the right */}
+            <div className="absolute -right-6 -bottom-6 opacity-[0.02] group-hover:opacity-[0.06] transition-all duration-500 pointer-events-none text-foreground transform group-hover:rotate-12">
+              <svg width="120" height="120" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1" strokeLinecap="round" strokeLinejoin="round">
+                <path d="M12 2L14.5 9.5L22 12L14.5 14.5L12 22L9.5 14.5L2 12L9.5 9.5L12 2Z" />
+                <path d="M12 2L14.5 9.5L22 12L14.5 14.5L12 22L9.5 14.5L2 12L9.5 9.5L12 2Z" transform="rotate(45 12 12)" />
+              </svg>
             </div>
           </a>
         ))}
