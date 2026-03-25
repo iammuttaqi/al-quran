@@ -12,7 +12,7 @@ export default defineConfig(({mode}) => {
       tailwindcss(),
       VitePWA({
         registerType: 'autoUpdate',
-        includeAssets: ['pwa-icon.svg'],
+        includeAssets: ['favicon.svg'],
         manifest: {
           name: 'Al Quran Digital',
           short_name: 'Al Quran',
@@ -21,7 +21,7 @@ export default defineConfig(({mode}) => {
           background_color: '#0c0a09',
           icons: [
             {
-              src: 'pwa-icon.svg',
+              src: 'favicon.svg',
               sizes: '192x192 512x512',
               type: 'image/svg+xml',
               purpose: 'any maskable'
