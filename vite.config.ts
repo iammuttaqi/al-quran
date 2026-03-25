@@ -13,6 +13,9 @@ export default defineConfig(({mode}) => {
       VitePWA({
         registerType: 'autoUpdate',
         includeAssets: ['pwa-icon.svg', 'og-image.jpg'],
+        workbox: {
+          navigateFallbackDenylist: [/\.(?:png|gif|jpg|jpeg|webp|svg)$/],
+        },
         manifest: {
           name: 'Al Quran Digital',
           short_name: 'Al Quran',
