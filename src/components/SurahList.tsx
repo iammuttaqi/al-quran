@@ -95,7 +95,7 @@ export function SurahList({ onSelectSurah, theme, cycleTheme }: SurahListProps) 
       const delayDebounceFn = setTimeout(() => {
         setIsSearching(true);
         setSearchError("");
-        fetch(`https://api.alquran.cloud/v1/search/${searchQuery}/all/en.asad`)
+        fetch(`https://api.alquran.cloud/v1/search/${searchQuery}/all/en.sahih`)
           .then((res) => res.json())
           .then((data: ApiResponse<SearchResponse>) => {
             if (data.code === 200 && data.data) {

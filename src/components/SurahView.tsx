@@ -551,7 +551,7 @@ Please provide the Tafsir in the following language(s): ${langsString}.${multiLa
   return (
     <div className="pb-16">
       {/* Header */}
-      <div className="sticky top-0 z-40 bg-background/40 backdrop-blur-xs border-b border-border/30 shadow-sm">
+      <div className="sticky top-0 z-40 bg-background/60 backdrop-blur-md border-b border-border/30 shadow-sm">
         <div className="max-w-4xl mx-auto px-4 pb-3 pt-3 flex flex-row items-center justify-between gap-3">
           <button
             onClick={onBack}
