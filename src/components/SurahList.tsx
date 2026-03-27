@@ -22,12 +22,44 @@ interface LastRead {
 export function SurahList({ onSelectSurah, theme, cycleTheme }: SurahListProps) {
   const [surahs, setSurahs] = useState<SurahMeta[]>([]);
   const [loading, setLoading] = useState(true);
-  const [searchQuery, setSearchQuery] = useState("");
-  const [searchMode, setSearchMode] = useState<SearchMode>("surah");
-  const [searchResults, setSearchResults] = useState<SearchMatch[]>([]);
+  const [searchQuery, setSearchQuery] = useState(() => sessionStorage.getItem('quranSearchQuery') || "");
+  const [searchMode, setSearchMode] = useState<SearchMode>(() => (sessionStorage.getItem('quranSearchMode') as SearchMode) || "surah");
+  const [searchResults, setSearchResults] = useState<SearchMatch[]>(() => {
+    const saved = sessionStorage.getItem('quranSearchResults');
+    return saved ? JSON.parse(saved) : [];
+  });
+  const [lastFetchedQuery, setLastFetchedQuery] = useState(() => sessionStorage.getItem('quranLastFetchedQuery') || "");
   const [isSearching, setIsSearching] = useState(false);
   const [searchError, setSearchError] = useState("");
   const [lastRead, setLastRead] = useState<LastRead | null>(null);
+
+  useEffect(() => {
+    sessionStorage.setItem('quranSearchQuery', searchQuery);
+    sessionStorage.setItem('quranSearchMode', searchMode);
+  }, [searchQuery, searchMode]);
+
+  useEffect(() => {
+    sessionStorage.setItem('quranSearchResults', JSON.stringify(searchResults));
+  }, [searchResults]);
+
+  useEffect(() => {
+    const handleScroll = () => {
+      sessionStorage.setItem('quranScrollPosition', window.scrollY.toString());
+    };
+    window.addEventListener('scroll', handleScroll);
+    return () => window.removeEventListener('scroll', handleScroll);
+  }, []);
+
+  useEffect(() => {
+    if (!loading) {
+      const savedScroll = sessionStorage.getItem('quranScrollPosition');
+      if (savedScroll) {
+        setTimeout(() => {
+          window.scrollTo(0, parseInt(savedScroll, 10));
+        }, 10);
+      }
+    }
+  }, [loading]);
 
   useEffect(() => {
     const saved = localStorage.getItem('lastRead');
@@ -56,6 +88,10 @@ export function SurahList({ onSelectSurah, theme, cycleTheme }: SurahListProps) 
 
   useEffect(() => {
     if (searchMode === "keyword" && searchQuery.length >= 3) {
+      if (searchQuery === lastFetchedQuery && searchResults.length > 0) {
+        return;
+      }
+
       const delayDebounceFn = setTimeout(() => {
         setIsSearching(true);
         setSearchError("");
@@ -64,6 +100,8 @@ export function SurahList({ onSelectSurah, theme, cycleTheme }: SurahListProps) 
           .then((data: ApiResponse<SearchResponse>) => {
             if (data.code === 200 && data.data) {
               setSearchResults(data.data.matches);
+              setLastFetchedQuery(searchQuery);
+              sessionStorage.setItem('quranLastFetchedQuery', searchQuery);
             } else {
               setSearchResults([]);
             }
@@ -81,8 +119,10 @@ export function SurahList({ onSelectSurah, theme, cycleTheme }: SurahListProps) 
     } else if (searchMode === "keyword" && searchQuery.length < 3) {
       setSearchResults([]);
       setSearchError("");
+      setLastFetchedQuery("");
+      sessionStorage.removeItem('quranLastFetchedQuery');
     }
-  }, [searchQuery, searchMode]);
+  }, [searchQuery, searchMode, lastFetchedQuery, searchResults.length]);
 
   const filteredSurahs = surahs.filter(
     (surah) =>
