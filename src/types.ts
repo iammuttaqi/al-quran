@@ -40,6 +40,18 @@ export interface SurahDetail {
   };
 }
 
+export interface SearchMatch {
+  number: number;
+  text: string;
+  numberInSurah: number;
+  surah: SurahMeta;
+}
+
+export interface SearchResponse {
+  count: number;
+  matches: SearchMatch[];
+}
+
 export interface ApiResponse<T> {
   code: number;
   status: string;

@@ -299,6 +299,50 @@ export function SurahView({ surahId, onBack, onNavigate, theme, cycleTheme }: Su
     }
   }, [loading, arabicData, surahId]);
 
+  // Track reading progress
+  useEffect(() => {
+    if (!arabicData || loading) return;
+
+    const observer = new IntersectionObserver(
+      (entries) => {
+        entries.forEach((entry) => {
+          if (entry.isIntersecting) {
+            const ayahId = entry.target.id.replace('ayah-', '');
+            const ayahNumber = parseInt(ayahId, 10);
+            if (!isNaN(ayahNumber)) {
+              const lastReadData = {
+                surahId: arabicData.number,
+                ayahNumber,
+                surahName: arabicData.name,
+                englishName: arabicData.englishName,
+                englishNameTranslation: arabicData.englishNameTranslation
+              };
+              localStorage.setItem('lastRead', JSON.stringify(lastReadData));
+            }
+          }
+        });
+      },
+      {
+        root: null,
+        rootMargin: '-10% 0px -40% 0px', // Trigger when ayah is in the upper middle of the screen
+        threshold: 0,
+      }
+    );
+
+    // Observe all ayahs after a short delay to ensure they are rendered
+    const timeoutId = setTimeout(() => {
+      arabicData.ayahs.forEach((ayah) => {
+        const el = document.getElementById(`ayah-${ayah.numberInSurah}`);
+        if (el) observer.observe(el);
+      });
+    }, 100);
+
+    return () => {
+      clearTimeout(timeoutId);
+      observer.disconnect();
+    };
+  }, [arabicData, loading]);
+
   const handleShare = async () => {
     const url = window.location.href;
     if (navigator.share) {
@@ -758,6 +802,7 @@ Please provide the Tafsir in the following language(s): ${langsString}.${multiLa
         <button
           onClick={() => {
             if (surahId > 1) {
+              window.history.pushState({}, "", `/${surahId - 1}`);
               onNavigate(surahId - 1);
               window.scrollTo(0, 0);
             }
@@ -778,6 +823,7 @@ Please provide the Tafsir in the following language(s): ${langsString}.${multiLa
         <button
           onClick={() => {
             if (surahId < 114) {
+              window.history.pushState({}, "", `/${surahId + 1}`);
               onNavigate(surahId + 1);
               window.scrollTo(0, 0);
             }
